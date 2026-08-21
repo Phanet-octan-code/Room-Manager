@@ -9,6 +9,7 @@ import {
   closeTenantModal,
   handleTenantFormSubmit,
   handleTenantPhotoUpload,
+  handleTenantIdCardPhotoUpload,
   viewTenantPhoto,
   closePhotoViewer
 } from './tenants.js';
@@ -181,7 +182,7 @@ export function switchTab(tabName) {
     'utilities': 'nav-mobile-utilities'
   };
 
-  ['nav-mobile-dashboard', 'nav-mobile-rooms', 'nav-mobile-invoices', 'nav-mobile-utilities', 'nav-mobile-more'].forEach(btnId => {
+  ['nav-mobile-dashboard', 'nav-mobile-rooms', 'nav-mobile-invoices', 'nav-mobile-utilities'].forEach(btnId => {
     const btn = document.getElementById(btnId);
     if (btn) btn.classList.remove('active');
   });
@@ -293,6 +294,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('tenant-status-filter')?.addEventListener('change', renderTenants);
   document.getElementById('tenant-gender-filter')?.addEventListener('change', renderTenants);
   document.getElementById('tenant-photo-input')?.addEventListener('change', handleTenantPhotoUpload);
+  document.getElementById('tenant-camera-input')?.addEventListener('change', handleTenantPhotoUpload);
+  document.getElementById('tenant-idcard-photo-input')?.addEventListener('change', handleTenantIdCardPhotoUpload);
+  document.getElementById('tenant-idcard-camera-input')?.addEventListener('change', handleTenantIdCardPhotoUpload);
   document.getElementById('utility-month-select')?.addEventListener('change', renderUtilities);
   document.getElementById('report-month-select')?.addEventListener('change', renderReports);
   document.getElementById('invoice-month-filter')?.addEventListener('change', renderInvoices);

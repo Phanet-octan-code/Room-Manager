@@ -2,6 +2,25 @@
 import { store } from './store.js';
 import { showToast } from './toast.js';
 
+export function toggleUtilityFormulas() {
+  const container = document.getElementById('utility-formula-cards');
+  const text = document.getElementById('toggle-formula-text');
+  const icon = document.getElementById('toggle-formula-icon');
+  if (!container) return;
+
+  const isHidden = container.classList.contains('hidden');
+  if (isHidden) {
+    container.classList.remove('hidden');
+    if (text) text.innerText = 'លាក់រូបមន្តគណនា';
+    if (icon) icon.className = 'fa-solid fa-chevron-up text-slate-500';
+  } else {
+    container.classList.add('hidden');
+    if (text) text.innerText = 'បង្ហាញរូបមន្តគណនា';
+    if (icon) icon.className = 'fa-solid fa-chevron-down text-slate-500';
+  }
+}
+window.toggleUtilityFormulas = toggleUtilityFormulas;
+
 export function renderUtilities() {
   const tableBody = document.getElementById('utilities-table-body');
   const mobileCards = document.getElementById('utilities-mobile-cards');

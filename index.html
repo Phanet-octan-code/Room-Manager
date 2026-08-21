@@ -219,121 +219,133 @@
           </button>
         </div>
 
-        <!-- Stat Cards Grid -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <!-- Stat Cards List (4 Rows and 1 Column) -->
+        <div class="grid grid-cols-1 gap-2.5">
           
-          <!-- Card 1: Total Rooms -->
-          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between card-hover">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-semibold text-slate-500">បន្ទប់សរុប</span>
-              <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-xs">
+          <!-- Row 1: Total Rooms -->
+          <div class="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-xs flex items-center justify-between card-hover">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-sm flex-shrink-0">
                 <i class="fa-solid fa-building"></i>
               </div>
+              <div>
+                <span class="text-xs sm:text-sm font-semibold text-slate-800 block">បន្ទប់សរុប</span>
+                <span class="text-[11px] text-slate-400">បន្ទប់សរុបទាំងអស់ក្នុងអគារ</span>
+              </div>
             </div>
-            <span id="stat-total-rooms" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">0</span>
-            <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1 font-medium">
-              <i class="fa-solid fa-door-closed text-[10px] text-slate-500"></i> <span>បន្ទប់សរុបទាំងអស់</span>
-            </div>
+            <span id="stat-total-rooms" class="text-xl sm:text-2xl font-bold text-slate-900 font-mono">0</span>
           </div>
 
-          <!-- Card 2: Occupied -->
-          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between card-hover">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-semibold text-blue-600">បន្ទប់មានអ្នកជួល</span>
-              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+          <!-- Row 2: Occupied -->
+          <div class="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-xs flex items-center justify-between card-hover">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm flex-shrink-0">
                 <i class="fa-solid fa-user-check"></i>
               </div>
+              <div>
+                <span class="text-xs sm:text-sm font-semibold text-blue-700 block">បន្ទប់មានអ្នកជួល</span>
+                <span class="text-[11px] text-slate-400">មានអ្នកជួលកំពុងស្នាក់នៅ</span>
+              </div>
             </div>
-            <span id="stat-occupied-rooms" class="text-2xl sm:text-3xl font-extrabold text-blue-600 font-mono tracking-tight">0</span>
-            <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1 font-medium">
-              <i class="fa-solid fa-users text-[10px] text-blue-500"></i> <span>មានអ្នកជួលស្នាក់នៅ</span>
-            </div>
+            <span id="stat-occupied-rooms" class="text-xl sm:text-2xl font-bold text-blue-600 font-mono">0</span>
           </div>
 
-          <!-- Card 3: Available -->
-          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between card-hover">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-semibold text-emerald-600">បន្ទប់ទំនេរ</span>
-              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+          <!-- Row 3: Available -->
+          <div class="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-xs flex items-center justify-between card-hover">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm flex-shrink-0">
                 <i class="fa-solid fa-door-open"></i>
               </div>
-            </div>
-            <span id="stat-available-rooms" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono tracking-tight">0</span>
-            <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1 font-medium">
-              <i class="fa-solid fa-key text-[10px] text-emerald-500"></i> <span>ទំនេរអាចជួលបាន</span>
-            </div>
-          </div>
-
-          <!-- Card 4: Unpaid -->
-          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between card-hover">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-semibold text-rose-600">មិនទាន់បង់</span>
-              <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
-                <i class="fa-solid fa-clock-rotate-left"></i>
+              <div>
+                <span class="text-xs sm:text-sm font-semibold text-emerald-700 block">បន្ទប់ទំនេរ</span>
+                <span class="text-[11px] text-slate-400">បន្ទប់ទំនេរអាចជួលបាន</span>
               </div>
             </div>
-            <span id="stat-unpaid-invoices-count" class="text-2xl sm:text-3xl font-extrabold text-rose-600 font-mono tracking-tight">0</span>
-            <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1 font-medium">
-              <i class="fa-solid fa-circle-exclamation text-[10px] text-rose-500"></i> <span>វិក្កយបត្រមិនទាន់បង់</span>
+            <span id="stat-available-rooms" class="text-xl sm:text-2xl font-bold text-emerald-600 font-mono">0</span>
+          </div>
+
+          <!-- Row 4: Unpaid -->
+          <div class="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-xs flex items-center justify-between card-hover">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm flex-shrink-0">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </div>
+              <div>
+                <span class="text-xs sm:text-sm font-semibold text-rose-700 block">មិនទាន់បង់ប្រាក់</span>
+                <span class="text-[11px] text-slate-400">វិក្កយបត្រមិនទាន់បានបង់</span>
+              </div>
             </div>
+            <span id="stat-unpaid-invoices-count" class="text-xl sm:text-2xl font-bold text-rose-600 font-mono">0</span>
           </div>
 
         </div>
 
-        <!-- Monthly Income Card (Clean Modern Card) -->
-        <div class="bg-white rounded-2xl p-4 sm:p-5 text-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs border border-slate-200">
-          <div class="flex items-center gap-3.5">
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl border border-emerald-100 flex-shrink-0">
+        <!-- Monthly Income Card (Compact Clean Modern Card) -->
+        <div class="bg-white rounded-xl p-2.5 sm:p-3.5 text-slate-800 flex flex-row items-center justify-between gap-2.5 shadow-xs border border-slate-200">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm sm:text-base border border-emerald-100 flex-shrink-0">
               <i class="fa-solid fa-sack-dollar"></i>
             </div>
-            <div>
-              <span class="text-[11px] text-slate-500 font-semibold tracking-wider flex items-center gap-1.5 mb-0.5">
-                <i class="fa-solid fa-calendar-check text-[10px] text-emerald-600"></i> <span>ចំណូលក្នុងខែនេះ</span>
+            <div class="min-w-0">
+              <span class="text-[11px] sm:text-xs text-slate-500 font-semibold flex items-center gap-1 mb-0.5">
+                <i class="fa-solid fa-calendar-check text-[9px] text-emerald-600"></i> <span>ចំណូលខែនេះ</span>
               </span>
-              <div class="flex flex-wrap items-baseline gap-2.5">
-                <span id="stat-monthly-income-usd" class="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-600">$0</span>
-                <span id="stat-monthly-income-khr" class="text-xs sm:text-sm text-slate-500 font-mono">≈ 0 ៛</span>
+              <div class="flex items-baseline gap-1.5 flex-wrap">
+                <span id="stat-monthly-income-usd" class="text-base sm:text-2xl font-bold font-mono text-emerald-600">$0</span>
+                <span id="stat-monthly-income-khr" class="text-[10px] sm:text-xs text-slate-500 font-mono">≈ 0 ៛</span>
               </div>
             </div>
           </div>
           
-          <button onclick="switchTab('reports')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 border border-slate-200 transition w-full sm:w-auto justify-center">
-            <i class="fa-solid fa-chart-pie text-xs text-slate-600"></i> <span>មើលរបាយការណ៍លម្អិត</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          <button onclick="switchTab('reports')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] sm:text-xs font-semibold flex items-center gap-1 border border-slate-200 transition flex-shrink-0">
+            <i class="fa-solid fa-chart-pie text-[11px] text-slate-600"></i> <span>របាយការណ៍</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
           </button>
         </div>
 
         <!-- Quick Actions & Recent Unpaid Invoices -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
           
-          <!-- Quick Action Buttons -->
-          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
-            <h3 class="text-xs font-bold text-slate-700 mb-3.5 flex items-center gap-2 tracking-wider">
+          <!-- Quick Action Buttons (4 Rows & 1 Column) -->
+          <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
+            <h3 class="text-xs font-bold text-slate-700 mb-2.5 flex items-center gap-2 tracking-wider">
               <i class="fa-solid fa-bolt text-amber-500 text-xs"></i> <span>សកម្មភាពរហ័ស</span>
             </h3>
-            <div class="grid grid-cols-2 gap-2.5 sm:gap-3">
-              <button onclick="openRoomModal()" class="p-3 sm:p-3.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-2 transition border border-slate-200 group shadow-xs">
-                <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                  <i class="fa-solid fa-plus-circle"></i>
+            <div class="grid grid-cols-1 gap-2">
+              <button onclick="openRoomModal()" class="w-full p-2.5 bg-slate-50 hover:bg-blue-50/70 hover:border-blue-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-between transition border border-slate-200 group shadow-xs">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform flex-shrink-0">
+                    <i class="fa-solid fa-plus-circle"></i>
+                  </div>
+                  <span class="font-medium text-slate-800">បន្ថែមបន្ទប់</span>
                 </div>
-                <span>បន្ថែមបន្ទប់</span>
+                <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all"></i>
               </button>
-              <button onclick="openTenantModal()" class="p-3 sm:p-3.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-2 transition border border-slate-200 group shadow-xs">
-                <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                  <i class="fa-solid fa-user-plus"></i>
+              <button onclick="openTenantModal()" class="w-full p-2.5 bg-slate-50 hover:bg-indigo-50/70 hover:border-indigo-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-between transition border border-slate-200 group shadow-xs">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform flex-shrink-0">
+                    <i class="fa-solid fa-user-plus"></i>
+                  </div>
+                  <span class="font-medium text-slate-800">ចុះឈ្មោះអ្នកជួល</span>
                 </div>
-                <span>ចុះអ្នកជួល</span>
+                <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all"></i>
               </button>
-              <button onclick="switchTab('utilities')" class="p-3 sm:p-3.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-2 transition border border-slate-200 group shadow-xs">
-                <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                  <i class="fa-solid fa-gauge-high"></i>
+              <button onclick="switchTab('utilities')" class="w-full p-2.5 bg-slate-50 hover:bg-amber-50/70 hover:border-amber-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-between transition border border-slate-200 group shadow-xs">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform flex-shrink-0">
+                    <i class="fa-solid fa-gauge-high"></i>
+                  </div>
+                  <span class="font-medium text-slate-800">កត់ទឹក-ភ្លើង</span>
                 </div>
-                <span>កត់ទឹក-ភ្លើង</span>
+                <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 group-hover:text-amber-600 group-hover:translate-x-0.5 transition-all"></i>
               </button>
-              <button onclick="openCreateInvoiceModal()" class="p-3 sm:p-3.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-2 transition border border-slate-200 group shadow-xs">
-                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
-                  <i class="fa-solid fa-file-invoice-dollar"></i>
+              <button onclick="openCreateInvoiceModal()" class="w-full p-2.5 bg-slate-50 hover:bg-emerald-50/70 hover:border-emerald-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-between transition border border-slate-200 group shadow-xs">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform flex-shrink-0">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                  </div>
+                  <span class="font-medium text-slate-800">ចេញវិក្កយបត្រ</span>
                 </div>
-                <span>ចេញវិក្កយបត្រ</span>
+                <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all"></i>
               </button>
             </div>
           </div>
@@ -530,41 +542,48 @@
       <!-- ==================== TAB 5: PAYMENTS (ការបង់ប្រាក់) ==================== -->
       <section id="section-payments" class="hidden space-y-4">
         
-        <!-- Payment summary metrics -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1 card-hover">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11px] text-slate-400 uppercase font-semibold">សរុបប្រាក់បានបង់</span>
-              <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+        <!-- Payment summary metrics (3 Rows & 1 Column) -->
+        <div class="grid grid-cols-1 gap-2.5">
+          <!-- Row 1: Total Paid -->
+          <div class="bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200 shadow-xs flex items-center justify-between card-hover">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm flex-shrink-0">
                 <i class="fa-solid fa-wallet"></i>
               </div>
+              <div>
+                <span class="text-xs sm:text-sm font-semibold text-slate-800 block">សរុបប្រាក់បានបង់</span>
+                <span id="payments-total-usd" class="text-[11px] text-slate-400 font-mono block">$0.00</span>
+              </div>
             </div>
-            <div id="payments-total-khr" class="text-xl sm:text-2xl font-extrabold text-emerald-600 font-mono">0 ៛</div>
-            <div id="payments-total-usd" class="text-xs text-slate-400 font-mono">$0.00</div>
+            <div id="payments-total-khr" class="text-lg sm:text-2xl font-bold text-emerald-600 font-mono">0 ៛</div>
           </div>
 
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs card-hover">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11px] text-slate-400 uppercase font-semibold">ប្រតិបត្តិការ</span>
-              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+          <!-- Row 2: Transactions Count -->
+          <div class="bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200 shadow-xs flex items-center justify-between card-hover">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm flex-shrink-0">
                 <i class="fa-solid fa-receipt"></i>
               </div>
-            </div>
-            <div id="payments-total-count" class="text-xl sm:text-2xl font-extrabold text-blue-600 font-mono">0</div>
-            <div class="text-[10px] text-slate-400">បានទូទាត់ជោគជ័យ</div>
-          </div>
-
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs card-hover">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11px] text-slate-400 uppercase font-semibold">វិធីសាស្រ្ត</span>
-              <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
-                <i class="fa-solid fa-qrcode"></i>
+              <div>
+                <span class="text-xs sm:text-sm font-semibold text-blue-700 block">ប្រតិបត្តិការសរុប</span>
+                <span class="text-[11px] text-slate-400">បានទូទាត់ជោគជ័យ</span>
               </div>
             </div>
-            <div class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-              <span>ABA KHQR</span>
+            <div id="payments-total-count" class="text-lg sm:text-2xl font-bold text-blue-600 font-mono">0</div>
+          </div>
+
+          <!-- Row 3: Payment Method -->
+          <div class="bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200 shadow-xs flex items-center justify-between card-hover">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm flex-shrink-0">
+                <i class="fa-solid fa-qrcode"></i>
+              </div>
+              <div>
+                <span class="text-xs sm:text-sm font-semibold text-rose-700 block">វិធីសាស្រ្តចម្បង</span>
+                <span class="text-[11px] text-slate-400">ស្កេនទូទាត់រហ័ស</span>
+              </div>
             </div>
-            <div class="text-[10px] text-slate-400">ស្កេនទូទាត់រហ័ស</div>
+            <div class="text-sm sm:text-base font-bold text-slate-800 font-mono">ABA KHQR</div>
           </div>
         </div>
 
@@ -602,8 +621,8 @@
       <!-- ==================== TAB 6: UTILITIES (ទឹក / ភ្លើង) ==================== -->
       <section id="section-utilities" class="hidden space-y-4">
         
-        <!-- Utility Formula Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+        <!-- Utility Formula Cards (Original Top Position & Open by Default) -->
+        <div id="utility-formula-cards" class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 animate-fade-in">
           
           <!-- Electricity Formula Card -->
           <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-2">
@@ -645,11 +664,16 @@
 
         <!-- Toolbar -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <label class="text-xs font-bold text-slate-700 whitespace-nowrap flex items-center gap-1.5">
               <i class="fa-solid fa-calendar-days text-blue-600"></i> <span>កត់ត្រាសម្រាប់ខែ:</span>
             </label>
-            <input id="utility-month-select" type="month" class="w-full sm:w-auto border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono bg-white focus:ring-2 focus:ring-blue-500">
+            <input id="utility-month-select" type="month" class="border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono bg-white focus:ring-2 focus:ring-blue-500">
+            <button type="button" onclick="toggleUtilityFormulas()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-slate-200 transition active:scale-98">
+              <i class="fa-solid fa-circle-question text-slate-500"></i>
+              <span id="toggle-formula-text">លាក់រូបមន្តគណនា</span>
+              <i id="toggle-formula-icon" class="fa-solid fa-chevron-up text-slate-500 text-[10px]"></i>
+            </button>
           </div>
           <button onclick="saveAllUtilities()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition shadow-xs active:scale-98">
             <i class="fa-solid fa-floppy-disk text-sm"></i> <span>រក្សាទុកលេខកុងទ័រទាំងអស់</span>
@@ -1087,10 +1111,6 @@
       <i class="fa-solid fa-bolt-lightning"></i>
       <span>ទឹក-ភ្លើង</span>
     </button>
-    <button id="nav-mobile-more" onclick="toggleMobileSidebar()" class="mobile-nav-btn">
-      <i class="fa-solid fa-bars"></i>
-      <span>មីនុយ</span>
-    </button>
   </nav>
 
   <!-- ==================== MODALS ==================== -->
@@ -1198,21 +1218,41 @@
         <input type="hidden" id="tenant-id">
         <input type="hidden" id="tenant-photo-data">
         
-        <!-- Photo Upload Preview -->
-        <div class="flex items-center gap-3.5 p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-          <div class="relative w-14 h-14 flex-shrink-0 flex items-center justify-center">
-            <img id="tenant-photo-preview" src="" class="w-14 h-14 rounded-full object-cover border-2 border-blue-600 shadow-xs hidden">
-            <div id="tenant-photo-placeholder" class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xl">
-              <i class="fa-solid fa-user"></i>
+        <!-- Photo Upload & Camera Section (Clean, Compact Horizontal Row) -->
+        <div class="flex items-center justify-between gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <div class="flex items-center gap-3 min-w-0">
+            <!-- Small Avatar Preview -->
+            <div class="relative w-12 h-12 flex-shrink-0">
+              <img id="tenant-photo-preview" src="" class="w-12 h-12 rounded-xl object-cover border border-blue-500 shadow-2xs hidden cursor-pointer" onclick="if(this.src) viewTenantPhoto(this.src, 'រូបថតអ្នកជួល')" title="ចុចមើលរូបធំ">
+              <div id="tenant-photo-placeholder" class="w-12 h-12 rounded-xl bg-slate-200 text-slate-400 flex items-center justify-center text-xl border border-slate-300">
+                <i class="fa-solid fa-user"></i>
+              </div>
+            </div>
+            <div class="min-w-0">
+              <span class="text-xs font-bold text-slate-800 block truncate">រូបថតអ្នកជួល</span>
+              <p class="text-[10px] text-slate-400 truncate">ថតផ្ទាល់ ឬជ្រើសរូបភាព</p>
             </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-image text-blue-600"></i> រូបថតអ្នកជួល
-            </label>
-            <input type="file" id="tenant-photo-input" accept="image/*" class="text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 cursor-pointer w-full">
-            <p class="text-[10px] text-slate-400 mt-0.5">គាំទ្ររូបភាព PNG, JPG, WebP</p>
+
+          <!-- Action Buttons in 1 Row -->
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button type="button" onclick="triggerCameraCapture('profile')" class="h-8 px-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shadow-2xs transition active:scale-95" title="ថតរូបផ្ទាល់">
+              <i class="fa-solid fa-camera text-[11px]"></i> <span>ថតផ្ទាល់</span>
+            </button>
+            
+            <button type="button" onclick="document.getElementById('tenant-photo-input').click()" class="h-8 px-2.5 bg-white hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1 border border-slate-300 shadow-2xs transition active:scale-95" title="ជ្រើសរើសរូប">
+              <i class="fa-solid fa-image text-slate-500 text-[11px]"></i> <span>ជ្រើសរូប</span>
+            </button>
+
+            <button type="button" id="tenant-photo-remove-btn" onclick="removeTenantPhoto()" class="h-8 w-8 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs hidden items-center justify-center border border-rose-200 transition active:scale-95 flex-shrink-0" title="លុបរូប">
+              <i class="fa-solid fa-trash-can text-[11px]"></i>
+            </button>
           </div>
+
+          <!-- Hidden file inputs -->
+          <input type="file" id="tenant-photo-input" accept="image/*" class="hidden">
+          <input type="file" id="tenant-camera-input" accept="image/*" capture="environment" class="hidden">
+          <input type="hidden" id="tenant-photo-data">
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1241,10 +1281,34 @@
             <input id="tenant-phone" type="text" placeholder="012 345 678" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white" required>
           </div>
           <div>
-            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
-              <i class="fa-solid fa-address-card text-slate-400"></i> លេខអត្តសញ្ញាណប័ណ្ណ
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-address-card text-slate-400"></i> លេខអត្តសញ្ញាណប័ណ្ណ</span>
             </label>
-            <input id="tenant-idcard" type="text" placeholder="010203040" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+            <div class="flex items-center gap-1.5">
+              <input id="tenant-idcard" type="text" placeholder="010203040" class="flex-1 min-w-0 px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white text-xs sm:text-sm">
+              
+              <!-- Small 1-Row Inline ID Card Photo Controls -->
+              <div class="relative w-9 h-9 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0" title="រូបថតអត្តសញ្ញាណប័ណ្ណ">
+                <img id="tenant-idcard-preview" src="" class="w-full h-full object-cover hidden cursor-pointer" onclick="if(this.src) viewTenantPhoto(this.src, 'អត្តសញ្ញាណប័ណ្ណ')" title="ចុចមើលរូប">
+                <div id="tenant-idcard-placeholder" class="text-slate-400 text-xs flex items-center justify-center">
+                  <i class="fa-solid fa-id-card"></i>
+                </div>
+              </div>
+              <button type="button" onclick="triggerCameraCapture('idcard')" class="w-9 h-9 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center border border-blue-200 transition active:scale-95 flex-shrink-0 shadow-2xs" title="ថតរូបកាត">
+                <i class="fa-solid fa-camera text-xs"></i>
+              </button>
+              <button type="button" onclick="document.getElementById('tenant-idcard-photo-input').click()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center border border-slate-200 transition active:scale-95 flex-shrink-0 shadow-2xs" title="ជ្រើសរើសរូបកាត">
+                <i class="fa-solid fa-image text-xs"></i>
+              </button>
+              <button type="button" id="tenant-idcard-remove-btn" onclick="removeTenantIdCardPhoto()" class="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 hidden items-center justify-center border border-rose-200 transition active:scale-95 flex-shrink-0 shadow-2xs" title="លុបរូបកាត">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+
+              <!-- Hidden inputs -->
+              <input type="file" id="tenant-idcard-photo-input" accept="image/*" class="hidden">
+              <input type="file" id="tenant-idcard-camera-input" accept="image/*" capture="environment" class="hidden">
+              <input type="hidden" id="tenant-idcard-photo-data">
+            </div>
           </div>
         </div>
 
@@ -1299,6 +1363,84 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LIVE CAMERA CAPTURE -->
+  <div id="camera-modal" class="fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-5 shadow-2xl animate-fade-in flex flex-col max-h-[95vh] border border-slate-200">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+        <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-camera text-blue-600"></i> <span>ថតរូបផ្ទាល់ពីកាមេរ៉ា</span>
+        </h3>
+        <button type="button" onclick="closeCameraModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Live Viewfinder / Snapshot Box -->
+      <div class="relative bg-slate-950 rounded-2xl overflow-hidden aspect-[4/3] flex items-center justify-center border border-slate-800 shadow-inner">
+        <!-- Live Video Element -->
+        <video id="camera-stream-video" autoplay playsinline class="w-full h-full object-cover"></video>
+        
+        <!-- Snapshot Image Preview (Shown after snap) -->
+        <img id="camera-snap-preview" src="" class="w-full h-full object-cover hidden">
+        
+        <!-- Hidden Canvas for frame capture -->
+        <canvas id="camera-capture-canvas" class="hidden"></canvas>
+
+        <!-- Camera Flip Button (Over video) -->
+        <button id="camera-flip-btn" type="button" onclick="flipCameraFacingMode()" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition shadow-md" title="ប្តូរកាមេរ៉ាមុខ/ក្រោយ">
+          <i class="fa-solid fa-camera-rotate text-sm"></i>
+        </button>
+
+        <!-- Grid Guide Overlay for framing -->
+        <div id="camera-grid-overlay" class="absolute inset-0 pointer-events-none border border-white/20 grid grid-cols-3 grid-rows-3">
+          <div class="border-r border-b border-white/10"></div>
+          <div class="border-r border-b border-white/10"></div>
+          <div class="border-b border-white/10"></div>
+          <div class="border-r border-b border-white/10"></div>
+          <div class="border-r border-b border-white/10"></div>
+          <div class="border-b border-white/10"></div>
+          <div class="border-r border-white/10"></div>
+          <div class="border-r border-white/10"></div>
+          <div></div>
+        </div>
+      </div>
+
+      <!-- Controls Area -->
+      <div class="mt-4 pt-2">
+        
+        <!-- Live Mode Controls -->
+        <div id="camera-live-controls" class="w-full flex items-center justify-between">
+          <button type="button" onclick="closeCameraModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-xmark"></i> <span>បោះបង់</span>
+          </button>
+          
+          <!-- Big Shutter Button -->
+          <button type="button" onclick="snapCameraPhoto()" class="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center text-xl shadow-lg ring-4 ring-blue-100 transition active:scale-90" title="ថតរូប">
+            <i class="fa-solid fa-camera"></i>
+          </button>
+
+          <button type="button" onclick="flipCameraFacingMode()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-camera-rotate"></i> <span>ប្តូរកាមេរ៉ា</span>
+          </button>
+        </div>
+
+        <!-- Snap Result Preview Controls -->
+        <div id="camera-preview-controls" class="w-full hidden items-center justify-between gap-2">
+          <button type="button" onclick="retakeCameraPhoto()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-98">
+            <i class="fa-solid fa-rotate-left"></i> <span>ថតម្តងទៀត</span>
+          </button>
+          <button type="button" onclick="confirmCameraPhoto()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition active:scale-98">
+            <i class="fa-solid fa-check"></i> <span>យល់ព្រមប្រើរូបនេះ</span>
+          </button>
+        </div>
+
+      </div>
+
     </div>
   </div>
 

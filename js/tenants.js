@@ -96,7 +96,18 @@ export function renderTenants() {
           </td>
 
           <!-- ID Card -->
-          <td class="py-3.5 px-3 text-slate-600 font-mono text-xs whitespace-nowrap">${tenant.idCard || '-'}</td>
+          <td class="py-3.5 px-3 text-slate-600 font-mono text-xs whitespace-nowrap">
+            <div class="flex items-center gap-1.5">
+              <span>${tenant.idCard || '-'}</span>
+              ${tenant.idCardPhotoUrl ? `
+                <button type="button" onclick="window.viewTenantPhoto('${tenant.idCardPhotoUrl}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" 
+                        class="w-6 h-6 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition border border-blue-200 shadow-2xs" 
+                        title="ចុចមើលរូបថតអត្តសញ្ញាណប័ណ្ណ">
+                  <i class="fa-solid fa-id-card text-[11px]"></i>
+                </button>
+              ` : ''}
+            </div>
+          </td>
 
           <!-- Address -->
           <td class="py-3.5 px-3 text-slate-600 text-xs whitespace-nowrap" title="${tenant.address || '-'}">
@@ -177,10 +188,18 @@ export function renderTenants() {
 
           <!-- Other Details -->
           <div class="text-xs text-slate-600 space-y-1.5 pt-1">
-            ${tenant.idCard ? `
+            ${(tenant.idCard || tenant.idCardPhotoUrl) ? `
               <div class="flex justify-between items-center text-[11px]">
                 <span class="text-slate-400 flex items-center gap-1"><i class="fa-solid fa-address-card text-slate-400"></i> អត្តសញ្ញាណប័ណ្ណ:</span>
-                <span class="font-mono font-medium text-slate-700">${tenant.idCard}</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-medium text-slate-700">${tenant.idCard || '-'}</span>
+                  ${tenant.idCardPhotoUrl ? `
+                    <button type="button" onclick="window.viewTenantPhoto('${tenant.idCardPhotoUrl}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" 
+                            class="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-sans font-semibold text-[10px] flex items-center gap-1 border border-blue-200">
+                      <i class="fa-solid fa-id-card text-[10px]"></i> មើលរូប
+                    </button>
+                  ` : ''}
+                </div>
               </div>
             ` : ''}
             ${tenant.address ? `
@@ -237,19 +256,280 @@ export function populateTenantRoomSelect(selectedRoomId = '') {
   select.innerHTML = options;
 }
 
+let currentCameraStream = null;
+let currentFacingMode = 'environment';
+let currentCapturedPhotoData = '';
+let currentCameraTarget = 'profile'; // 'profile' or 'idcard'
+
+export async function triggerCameraCapture(target = 'profile') {
+  currentCameraTarget = target;
+  const modal = document.getElementById('camera-modal');
+  const video = document.getElementById('camera-stream-video');
+  const preview = document.getElementById('camera-snap-preview');
+  const liveControls = document.getElementById('camera-live-controls');
+  const previewControls = document.getElementById('camera-preview-controls');
+  const gridOverlay = document.getElementById('camera-grid-overlay');
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    const inputId = target === 'idcard' ? 'tenant-idcard-camera-input' : 'tenant-camera-input';
+    const cameraInput = document.getElementById(inputId);
+    if (cameraInput) cameraInput.click();
+    return;
+  }
+
+  // Reset UI state to live video
+  if (preview) {
+    preview.src = '';
+    preview.classList.add('hidden');
+  }
+  if (video) video.classList.remove('hidden');
+  if (gridOverlay) gridOverlay.classList.remove('hidden');
+  if (liveControls) {
+    liveControls.classList.remove('hidden');
+    liveControls.classList.add('flex');
+  }
+  if (previewControls) {
+    previewControls.classList.add('hidden');
+    previewControls.classList.remove('flex');
+  }
+
+  if (modal) modal.classList.remove('hidden');
+  await startCameraStream(currentFacingMode);
+}
+window.triggerCameraCapture = triggerCameraCapture;
+
+async function startCameraStream(facingMode = 'environment') {
+  stopCameraStream();
+  const video = document.getElementById('camera-stream-video');
+  if (!video) return;
+
+  try {
+    const constraints = {
+      video: {
+        facingMode: { ideal: facingMode },
+        width: { ideal: 1280 },
+        height: { ideal: 960 }
+      },
+      audio: false
+    };
+    currentCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = currentCameraStream;
+    await video.play();
+  } catch (err) {
+    console.warn('[Camera Error]:', err);
+    try {
+      currentCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      video.srcObject = currentCameraStream;
+      await video.play();
+    } catch (fallbackErr) {
+      console.error('[Camera Fallback Error]:', fallbackErr);
+      closeCameraModal();
+      const inputId = currentCameraTarget === 'idcard' ? 'tenant-idcard-camera-input' : 'tenant-camera-input';
+      const cameraInput = document.getElementById(inputId);
+      if (cameraInput) cameraInput.click();
+      showToast('កំពុងបើកកាមេរ៉ាពីទូរស័ព្ទ...', 'info');
+    }
+  }
+}
+
+export function stopCameraStream() {
+  if (currentCameraStream) {
+    currentCameraStream.getTracks().forEach(track => track.stop());
+    currentCameraStream = null;
+  }
+  const video = document.getElementById('camera-stream-video');
+  if (video) video.srcObject = null;
+}
+
+export function closeCameraModal() {
+  stopCameraStream();
+  const modal = document.getElementById('camera-modal');
+  if (modal) modal.classList.add('hidden');
+}
+window.closeCameraModal = closeCameraModal;
+
+export async function flipCameraFacingMode() {
+  currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+  await startCameraStream(currentFacingMode);
+}
+window.flipCameraFacingMode = flipCameraFacingMode;
+
+export function snapCameraPhoto() {
+  const video = document.getElementById('camera-stream-video');
+  const canvas = document.getElementById('camera-capture-canvas');
+  const preview = document.getElementById('camera-snap-preview');
+  const liveControls = document.getElementById('camera-live-controls');
+  const previewControls = document.getElementById('camera-preview-controls');
+  const gridOverlay = document.getElementById('camera-grid-overlay');
+
+  if (!video || !canvas) return;
+
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  currentCapturedPhotoData = canvas.toDataURL('image/jpeg', 0.88);
+
+  // Show captured preview
+  if (preview) {
+    preview.src = currentCapturedPhotoData;
+    preview.classList.remove('hidden');
+  }
+  if (video) video.classList.add('hidden');
+  if (gridOverlay) gridOverlay.classList.add('hidden');
+
+  if (liveControls) {
+    liveControls.classList.add('hidden');
+    liveControls.classList.remove('flex');
+  }
+  if (previewControls) {
+    previewControls.classList.remove('hidden');
+    previewControls.classList.add('flex');
+  }
+}
+window.snapCameraPhoto = snapCameraPhoto;
+
+export function retakeCameraPhoto() {
+  const video = document.getElementById('camera-stream-video');
+  const preview = document.getElementById('camera-snap-preview');
+  const liveControls = document.getElementById('camera-live-controls');
+  const previewControls = document.getElementById('camera-preview-controls');
+  const gridOverlay = document.getElementById('camera-grid-overlay');
+
+  if (preview) {
+    preview.src = '';
+    preview.classList.add('hidden');
+  }
+  if (video) video.classList.remove('hidden');
+  if (gridOverlay) gridOverlay.classList.remove('hidden');
+
+  if (liveControls) {
+    liveControls.classList.remove('hidden');
+    liveControls.classList.add('flex');
+  }
+  if (previewControls) {
+    previewControls.classList.add('hidden');
+    previewControls.classList.remove('flex');
+  }
+}
+window.retakeCameraPhoto = retakeCameraPhoto;
+
+export function confirmCameraPhoto() {
+  if (!currentCapturedPhotoData) return;
+
+  if (currentCameraTarget === 'idcard') {
+    document.getElementById('tenant-idcard-photo-data').value = currentCapturedPhotoData;
+    const preview = document.getElementById('tenant-idcard-preview');
+    const placeholder = document.getElementById('tenant-idcard-placeholder');
+    const removeBtn = document.getElementById('tenant-idcard-remove-btn');
+
+    if (preview) {
+      preview.src = currentCapturedPhotoData;
+      preview.classList.remove('hidden');
+    }
+    if (placeholder) placeholder.classList.add('hidden');
+    if (removeBtn) {
+      removeBtn.classList.remove('hidden');
+      removeBtn.classList.add('inline-flex');
+    }
+    showToast('បានថតរូបអត្តសញ្ញាណប័ណ្ណជោគជ័យ ✓', 'success');
+  } else {
+    document.getElementById('tenant-photo-data').value = currentCapturedPhotoData;
+    const preview = document.getElementById('tenant-photo-preview');
+    const placeholder = document.getElementById('tenant-photo-placeholder');
+    const removeBtn = document.getElementById('tenant-photo-remove-btn');
+
+    if (preview) {
+      preview.src = currentCapturedPhotoData;
+      preview.classList.remove('hidden');
+    }
+    if (placeholder) placeholder.classList.add('hidden');
+    if (removeBtn) {
+      removeBtn.classList.remove('hidden');
+      removeBtn.classList.add('inline-flex');
+    }
+    showToast('បានថតរូបអ្នកជួលជោគជ័យ ✓', 'success');
+  }
+
+  closeCameraModal();
+}
+window.confirmCameraPhoto = confirmCameraPhoto;
+
+export function removeTenantPhoto() {
+  document.getElementById('tenant-photo-data').value = '';
+  const preview = document.getElementById('tenant-photo-preview');
+  const placeholder = document.getElementById('tenant-photo-placeholder');
+  const removeBtn = document.getElementById('tenant-photo-remove-btn');
+  const photoInput = document.getElementById('tenant-photo-input');
+  const cameraInput = document.getElementById('tenant-camera-input');
+  if (photoInput) photoInput.value = '';
+  if (cameraInput) cameraInput.value = '';
+  if (preview) {
+    preview.src = '';
+    preview.classList.add('hidden');
+  }
+  if (placeholder) placeholder.classList.remove('hidden');
+  if (removeBtn) {
+    removeBtn.classList.add('hidden');
+    removeBtn.classList.remove('inline-flex');
+  }
+}
+window.removeTenantPhoto = removeTenantPhoto;
+
+export function removeTenantIdCardPhoto() {
+  document.getElementById('tenant-idcard-photo-data').value = '';
+  const preview = document.getElementById('tenant-idcard-preview');
+  const placeholder = document.getElementById('tenant-idcard-placeholder');
+  const removeBtn = document.getElementById('tenant-idcard-remove-btn');
+  const photoInput = document.getElementById('tenant-idcard-photo-input');
+  const cameraInput = document.getElementById('tenant-idcard-camera-input');
+  if (photoInput) photoInput.value = '';
+  if (cameraInput) cameraInput.value = '';
+  if (preview) {
+    preview.src = '';
+    preview.classList.add('hidden');
+  }
+  if (placeholder) placeholder.classList.remove('hidden');
+  if (removeBtn) {
+    removeBtn.classList.add('hidden');
+    removeBtn.classList.remove('inline-flex');
+  }
+}
+window.removeTenantIdCardPhoto = removeTenantIdCardPhoto;
+
 export function openTenantModal(tenantId = null, preSelectRoomId = null) {
   const modal = document.getElementById('tenant-modal');
   const form = document.getElementById('tenant-form');
   const title = document.getElementById('tenant-modal-title');
   const photoPreview = document.getElementById('tenant-photo-preview');
   const photoPlaceholder = document.getElementById('tenant-photo-placeholder');
+  const removeBtn = document.getElementById('tenant-photo-remove-btn');
+
+  const idcardPreview = document.getElementById('tenant-idcard-preview');
+  const idcardPlaceholder = document.getElementById('tenant-idcard-placeholder');
+  const idcardRemoveBtn = document.getElementById('tenant-idcard-remove-btn');
+
   if (!modal || !form) return;
 
   form.reset();
   document.getElementById('tenant-id').value = '';
   document.getElementById('tenant-photo-data').value = '';
+  document.getElementById('tenant-idcard-photo-data').value = '';
+
   if (photoPreview) photoPreview.classList.add('hidden');
   if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
+  if (removeBtn) {
+    removeBtn.classList.add('hidden');
+    removeBtn.classList.remove('inline-flex');
+  }
+
+  if (idcardPreview) idcardPreview.classList.add('hidden');
+  if (idcardPlaceholder) idcardPlaceholder.classList.remove('hidden');
+  if (idcardRemoveBtn) {
+    idcardRemoveBtn.classList.add('hidden');
+    idcardRemoveBtn.classList.remove('inline-flex');
+  }
 
   let selectedRoom = preSelectRoomId;
 
@@ -277,6 +557,25 @@ export function openTenantModal(tenantId = null, preSelectRoomId = null) {
         if (photoPlaceholder) {
           photoPlaceholder.classList.add('hidden');
         }
+        if (removeBtn) {
+          removeBtn.classList.remove('hidden');
+          removeBtn.classList.add('inline-flex');
+        }
+      }
+
+      if (tenant.idCardPhotoUrl) {
+        document.getElementById('tenant-idcard-photo-data').value = tenant.idCardPhotoUrl;
+        if (idcardPreview) {
+          idcardPreview.src = tenant.idCardPhotoUrl;
+          idcardPreview.classList.remove('hidden');
+        }
+        if (idcardPlaceholder) {
+          idcardPlaceholder.classList.add('hidden');
+        }
+        if (idcardRemoveBtn) {
+          idcardRemoveBtn.classList.remove('hidden');
+          idcardRemoveBtn.classList.add('inline-flex');
+        }
       }
     }
   } else {
@@ -296,7 +595,7 @@ export function closeTenantModal() {
 }
 
 export function handleTenantPhotoUpload(e) {
-  const file = e.target.files[0];
+  const file = e.target.files && e.target.files[0];
   if (!file) return;
 
   const reader = new FileReader();
@@ -305,12 +604,43 @@ export function handleTenantPhotoUpload(e) {
     document.getElementById('tenant-photo-data').value = base64;
     const preview = document.getElementById('tenant-photo-preview');
     const placeholder = document.getElementById('tenant-photo-placeholder');
+    const removeBtn = document.getElementById('tenant-photo-remove-btn');
     if (preview) {
       preview.src = base64;
       preview.classList.remove('hidden');
     }
     if (placeholder) {
       placeholder.classList.add('hidden');
+    }
+    if (removeBtn) {
+      removeBtn.classList.remove('hidden');
+      removeBtn.classList.add('inline-flex');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+export function handleTenantIdCardPhotoUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const base64 = evt.target.result;
+    document.getElementById('tenant-idcard-photo-data').value = base64;
+    const preview = document.getElementById('tenant-idcard-preview');
+    const placeholder = document.getElementById('tenant-idcard-placeholder');
+    const removeBtn = document.getElementById('tenant-idcard-remove-btn');
+    if (preview) {
+      preview.src = base64;
+      preview.classList.remove('hidden');
+    }
+    if (placeholder) {
+      placeholder.classList.add('hidden');
+    }
+    if (removeBtn) {
+      removeBtn.classList.remove('hidden');
+      removeBtn.classList.add('inline-flex');
     }
   };
   reader.readAsDataURL(file);
@@ -324,6 +654,7 @@ export function handleTenantFormSubmit(e) {
     gender: document.getElementById('tenant-gender').value,
     phone: document.getElementById('tenant-phone').value.trim(),
     idCard: document.getElementById('tenant-idcard').value.trim(),
+    idCardPhotoUrl: document.getElementById('tenant-idcard-photo-data').value || '',
     address: document.getElementById('tenant-address').value.trim(),
     roomId: document.getElementById('tenant-room-id').value || null,
     startDate: document.getElementById('tenant-start-date').value,
