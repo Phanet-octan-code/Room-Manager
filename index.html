@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>បន្ទប់ជួល Management System</title>
+  
+  <!-- Google Fonts: Battambang & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@300;400;500;600;700;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#0f172a',
+            }
+          },
+          fontFamily: {
+            khmer: ['"Battambang"', 'sans-serif'],
+            sans: ['"Battambang"', 'Outfit', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome Icons with Reliable Dual CDN Fallbacks -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  
+  <!-- QRCode.js for generating KHQR / ABA Payments -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- html2pdf.js for generating and downloading Invoice PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="img/logo.png?v=3">
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-khmer antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- ==================== TOP CLEAN WHITE HEADER ==================== -->
+  <header class="bg-white text-slate-800 shadow-xs z-30 sticky top-0 border-b border-slate-200/90">
+    <div class="px-3.5 sm:px-6 py-2.5 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
+      
+      <!-- Brand Logo & Mobile Menu Toggle -->
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="mobile-menu-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-700 p-2 hover:bg-slate-100 rounded-xl transition flex-shrink-0 flex items-center justify-center focus:outline-none" title="បើកមីនុយ">
+          <i class="fa-solid fa-bars-staggered text-lg"></i>
+        </button>
+        <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-xs flex-shrink-0 overflow-hidden p-0.5">
+          <img src="img/logo.png?v=3" alt="Logo" class="w-full h-full object-contain">
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-sm sm:text-base font-bold tracking-tight text-slate-900 truncate flex items-center gap-1.5">
+            <span class="truncate">ប្រព័ន្ធគ្រប់គ្រងបន្ទប់ជួល</span>
+          </h1>
+          <p class="text-[10px] text-slate-500 hidden sm:flex items-center gap-1 font-sans font-medium">
+            <i class="fa-solid fa-building-circle-check text-[9px] text-emerald-600"></i> គ្រប់គ្រងការជួលបន្ទប់ & គិតថ្លៃទឹកភ្លើង
+          </p>
+        </div>
+      </div>
+
+      <!-- Right Header Status & Profile -->
+      <div class="flex items-center gap-2.5 flex-shrink-0">
+        <div id="supabase-status-badge">
+          <!-- Dynamic Supabase Status Badge -->
+        </div>
+        <div class="hidden lg:flex items-center gap-2 text-xs bg-slate-100 hover:bg-slate-200/70 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200 transition">
+          <div class="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold">
+            <i class="fa-solid fa-user-tie"></i>
+          </div>
+          <span class="font-medium text-slate-800">ម្ចាស់ផ្ទះ</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ==================== MAIN APP WRAPPER ==================== -->
+  <div class="flex-1 flex overflow-hidden relative max-w-7xl mx-auto w-full">
+    
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-55 md:hidden hidden transition-opacity"></div>
+
+    <!-- ==================== LEFT SIDEBAR ==================== -->
+    <aside id="sidebar" class="w-64 max-w-[85vw] bg-white border-r border-slate-200/80 flex flex-col justify-between transition-transform duration-200 ease-in-out fixed inset-y-0 left-0 z-60 -translate-x-full md:translate-x-0 md:static md:z-10 shadow-xl md:shadow-none h-full">
+      
+      <!-- Mobile Sidebar Top Header (Visible on mobile drawer only) -->
+      <div class="p-3.5 border-b border-slate-100 flex items-center justify-between md:hidden bg-slate-50">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-xs overflow-hidden p-0.5">
+            <img src="img/logo.png?v=3" alt="Logo" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <div class="font-bold text-xs text-slate-900">ប្រព័ន្ធគ្រប់គ្រងបន្ទប់ជួល</div>
+            <div class="text-[10px] text-slate-500 font-sans">Rental Room System</div>
+          </div>
+        </div>
+        <button onclick="toggleMobileSidebar()" class="w-8 h-8 rounded-xl bg-slate-200/80 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition" title="បិទ">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Desktop Sidebar Top Header (Visible on desktop only) -->
+      <div class="hidden md:block px-4 pt-4 pb-1">
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-compass text-slate-400 text-[10px]"></i>
+          <span>មីនុយចម្បង</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <div class="p-3.5 space-y-1 overflow-y-auto flex-1">
+        <button id="nav-dashboard" onclick="switchTab('dashboard')" class="sidebar-nav-btn active">
+          <div class="nav-icon-wrap">
+            <i class="fa-solid fa-chart-pie"></i>
+          </div>
+          <span>ផ្ទាំងព័ត៌មាន</span>
+        </button>
+
+        <button id="nav-rooms" onclick="switchTab('rooms')" class="sidebar-nav-btn">
+          <div class="nav-icon-wrap">
+            <i class="fa-solid fa-door-open"></i>
+          </div>
+          <span>បន្ទប់ជួល</span>
+        </button>
+
+        <button id="nav-tenants" onclick="switchTab('tenants')" class="sidebar-nav-btn">
+          <div class="nav-icon-wrap">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <span>អ្នកជួល</span>
+        </button>
+
+        <button id="nav-invoices" onclick="switchTab('invoices')" class="sidebar-nav-btn">
+          <div class="nav-icon-wrap">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+          </div>
+          <span>វិក្កយបត្រ</span>
+        </button>
+
+        <button id="nav-payments" onclick="switchTab('payments')" class="sidebar-nav-btn">
+          <div class="nav-icon-wrap">
+            <i class="fa-solid fa-money-bill-wave"></i>
+          </div>
+          <span>ការបង់ប្រាក់</span>
+        </button>
+
+        <button id="nav-utilities" onclick="switchTab('utilities')" class="sidebar-nav-btn">
+          <div class="nav-icon-wrap">
+            <i class="fa-solid fa-bolt-lightning"></i>
+          </div>
+          <span>ទឹក / ភ្លើង</span>
+        </button>
+
+        <button id="nav-reports" onclick="switchTab('reports')" class="sidebar-nav-btn">
+          <div class="nav-icon-wrap">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <span>របាយការណ៍</span>
+        </button>
+
+        <button id="nav-users" onclick="switchTab('users')" class="sidebar-nav-btn">
+          <div class="nav-icon-wrap">
+            <i class="fa-solid fa-user-gear"></i>
+          </div>
+          <span>បុគ្គលិក & គណនី</span>
+        </button>
+      </div>
+
+      <!-- Bottom Settings Link -->
+      <div class="p-3.5 border-t border-slate-100 bg-slate-50/60">
+        <button id="nav-settings" onclick="switchTab('settings')" class="sidebar-nav-btn">
+          <div class="nav-icon-wrap">
+            <i class="fa-solid fa-sliders"></i>
+          </div>
+          <span class="truncate">ការកំណត់ប្រព័ន្ធ</span>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- ==================== RIGHT MAIN CONTENT ==================== -->
+    <main class="flex-1 overflow-y-auto p-3.5 sm:p-5 lg:p-6 pb-24 md:pb-6 space-y-4">
+      
+      <!-- ==================== TAB 1: DASHBOARD ==================== -->
+      <section id="section-dashboard" class="space-y-4">
+        
+        <!-- Header Title Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
+          <div class="flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-base shadow-xs flex-shrink-0">
+              <i class="fa-solid fa-gauge"></i>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <span>ផ្ទាំងគ្រប់គ្រងទូទៅ</span>
+              </h2>
+              <p class="text-xs text-slate-500">ស្ថានភាពបន្ទប់ ចំនួនអ្នកជួល និងចំណូលប្រចាំខែ</p>
+            </div>
+          </div>
+          <button onclick="openCreateInvoiceModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition w-full sm:w-auto justify-center active:scale-98">
+            <i class="fa-solid fa-plus-circle text-sm"></i> <span>ចេញវិក្កយបត្រថ្មី</span>
+          </button>
+        </div>
+
+        <!-- Stat Cards Grid -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          
+          <!-- Card 1: Total Rooms -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-semibold text-slate-500">បន្ទប់សរុប</span>
+              <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-building"></i>
+              </div>
+            </div>
+            <span id="stat-total-rooms" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">0</span>
+            <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1 font-medium">
+              <i class="fa-solid fa-door-closed text-[10px] text-slate-500"></i> <span>បន្ទប់សរុបទាំងអស់</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Occupied -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-semibold text-blue-600">បន្ទប់មានអ្នកជួល</span>
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+            </div>
+            <span id="stat-occupied-rooms" class="text-2xl sm:text-3xl font-extrabold text-blue-600 font-mono tracking-tight">0</span>
+            <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1 font-medium">
+              <i class="fa-solid fa-users text-[10px] text-blue-500"></i> <span>មានអ្នកជួលស្នាក់នៅ</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Available -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-semibold text-emerald-600">បន្ទប់ទំនេរ</span>
+              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-door-open"></i>
+              </div>
+            </div>
+            <span id="stat-available-rooms" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono tracking-tight">0</span>
+            <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1 font-medium">
+              <i class="fa-solid fa-key text-[10px] text-emerald-500"></i> <span>ទំនេរអាចជួលបាន</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Unpaid -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-semibold text-rose-600">មិនទាន់បង់</span>
+              <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </div>
+            </div>
+            <span id="stat-unpaid-invoices-count" class="text-2xl sm:text-3xl font-extrabold text-rose-600 font-mono tracking-tight">0</span>
+            <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1 font-medium">
+              <i class="fa-solid fa-circle-exclamation text-[10px] text-rose-500"></i> <span>វិក្កយបត្រមិនទាន់បង់</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Monthly Income Card (Clean Modern Card) -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 text-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs border border-slate-200">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl border border-emerald-100 flex-shrink-0">
+              <i class="fa-solid fa-sack-dollar"></i>
+            </div>
+            <div>
+              <span class="text-[11px] text-slate-500 font-semibold tracking-wider flex items-center gap-1.5 mb-0.5">
+                <i class="fa-solid fa-calendar-check text-[10px] text-emerald-600"></i> <span>ចំណូលក្នុងខែនេះ</span>
+              </span>
+              <div class="flex flex-wrap items-baseline gap-2.5">
+                <span id="stat-monthly-income-usd" class="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-600">$0</span>
+                <span id="stat-monthly-income-khr" class="text-xs sm:text-sm text-slate-500 font-mono">≈ 0 ៛</span>
+              </div>
+            </div>
+          </div>
+          
+          <button onclick="switchTab('reports')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 border border-slate-200 transition w-full sm:w-auto justify-center">
+            <i class="fa-solid fa-chart-pie text-xs text-slate-600"></i> <span>មើលរបាយការណ៍លម្អិត</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </button>
+        </div>
+
+        <!-- Quick Actions & Recent Unpaid Invoices -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          
+          <!-- Quick Action Buttons -->
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <h3 class="text-xs font-bold text-slate-700 mb-3.5 flex items-center gap-2 tracking-wider">
+              <i class="fa-solid fa-bolt text-amber-500 text-xs"></i> <span>សកម្មភាពរហ័ស</span>
+            </h3>
+            <div class="grid grid-cols-2 gap-2.5 sm:gap-3">
+              <button onclick="openRoomModal()" class="p-3 sm:p-3.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-2 transition border border-slate-200 group shadow-xs">
+                <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-plus-circle"></i>
+                </div>
+                <span>បន្ថែមបន្ទប់</span>
+              </button>
+              <button onclick="openTenantModal()" class="p-3 sm:p-3.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-2 transition border border-slate-200 group shadow-xs">
+                <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <span>ចុះអ្នកជួល</span>
+              </button>
+              <button onclick="switchTab('utilities')" class="p-3 sm:p-3.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-2 transition border border-slate-200 group shadow-xs">
+                <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-gauge-high"></i>
+                </div>
+                <span>កត់ទឹក-ភ្លើង</span>
+              </button>
+              <button onclick="openCreateInvoiceModal()" class="p-3 sm:p-3.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-2 transition border border-slate-200 group shadow-xs">
+                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+                <span>ចេញវិក្កយបត្រ</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Recent Unpaid Invoices -->
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+              <h3 class="text-xs font-bold text-slate-700 flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation text-rose-500 text-xs"></i>
+                <span>វិក្កយបត្រមិនទាន់បង់</span>
+              </h3>
+              <button onclick="switchTab('invoices')" class="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1">
+                <span>មើលទាំងអស់</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+              </button>
+            </div>
+            <div id="dashboard-unpaid-list" class="divide-y divide-slate-100 flex-1">
+              <!-- Dynamic Unpaid List -->
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ==================== TAB 2: ROOMS (បន្ទប់ជួល) ==================== -->
+      <section id="section-rooms" class="hidden space-y-4">
+        
+        <!-- Filter Toolbar -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+              <input id="room-search" type="text" placeholder="ស្វែងរកតាមលេខបន្ទប់..." class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 bg-white">
+            </div>
+            <div class="flex gap-2">
+              <div class="relative flex-1 sm:flex-none">
+                <select id="room-status-filter" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white focus:ring-2 focus:ring-blue-500">
+                  <option value="all">ស្ថានភាពទាំងអស់</option>
+                  <option value="available">✓ ទំនេរ</option>
+                  <option value="occupied">● មានអ្នកជួល</option>
+                  <option value="maintenance">⚠ កំពុងជួសជុល</option>
+                </select>
+              </div>
+              <div class="relative flex-1 sm:flex-none">
+                <select id="room-type-filter" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white focus:ring-2 focus:ring-blue-500">
+                  <option value="all">ប្រភេទបន្ទប់ទាំងអស់</option>
+                  <option value="fan">បន្ទប់កង្ហារ</option>
+                  <option value="ac">បន្ទប់ម៉ាស៊ីនត្រជាក់</option>
+                  <option value="vip">បន្ទប់ VIP</option>
+                  <option value="studio">បន្ទប់ Studio</option>
+                </select>
+              </div>
+            </div>
+            <button onclick="openRoomModal()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition whitespace-nowrap shadow-xs active:scale-98">
+              <i class="fa-solid fa-plus-circle text-sm"></i> <span>បន្ថែមបន្ទប់</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View for Rooms (Responsive Scroll on Mobile) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[850px]">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-3.5 text-center"><i class="fa-solid fa-hashtag text-[10px]"></i></th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-door-closed text-[10px]"></i> បន្ទប់ & ជាន់</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-layer-group text-[10px]"></i> ប្រភេទបន្ទប់</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-tag text-[10px]"></i> ថ្លៃឈ្នួល/ខែ</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-shield-halved text-[10px]"></i> ប្រាក់កក់</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-user text-[10px]"></i> អ្នកជួលបច្ចុប្បន្ន</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-circle-check text-[10px]"></i> ស្ថានភាព</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-comment-dots text-[10px]"></i> ចំណាំ</th>
+                  <th class="py-3.5 px-3 text-right"><i class="fa-solid fa-gear text-[10px]"></i> សកម្មភាព</th>
+                </tr>
+              </thead>
+              <tbody id="rooms-table-body">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 3: TENANTS (អ្នកជួល) ==================== -->
+      <section id="section-tenants" class="hidden space-y-4">
+        
+        <!-- Filter Toolbar -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+              <input id="tenant-search" type="text" placeholder="ស្វែងរកឈ្មោះ លេខទូរស័ព្ទ អត្តសញ្ញាណប័ណ្ណ..." class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 bg-white">
+            </div>
+            <div class="flex gap-2">
+              <select id="tenant-status-filter" class="flex-1 sm:flex-none border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white focus:ring-2 focus:ring-blue-500">
+                <option value="all">ស្ថានភាពទាំងអស់</option>
+                <option value="active">✓ កំពុងស្នាក់នៅ</option>
+                <option value="inactive">✕ បានចាកចេញ</option>
+              </select>
+              <select id="tenant-gender-filter" class="flex-1 sm:flex-none border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white focus:ring-2 focus:ring-blue-500">
+                <option value="all">ភេទទាំងអស់</option>
+                <option value="male">ប្រុស</option>
+                <option value="female">ស្រី</option>
+              </select>
+            </div>
+            <button onclick="openTenantModal()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition whitespace-nowrap shadow-xs active:scale-98">
+              <i class="fa-solid fa-user-plus text-sm"></i> <span>បន្ថែមអ្នកជួល</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View for Tenants (Responsive Scroll on Mobile) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[850px]">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-3.5 text-center"><i class="fa-solid fa-hashtag text-[10px]"></i></th>
+                  <th class="py-3.5 px-3 text-center"><i class="fa-solid fa-image text-[10px]"></i> រូបថត</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-id-card text-[10px]"></i> ឈ្មោះ & ID</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-venus-mars text-[10px]"></i> ភេទ</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-phone text-[10px]"></i> លេខទូរស័ព្ទ</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-address-card text-[10px]"></i> អត្តសញ្ញាណប័ណ្ណ</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-location-dot text-[10px]"></i> អាសយដ្ឋាន</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-door-closed text-[10px]"></i> បន្ទប់</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-calendar-days text-[10px]"></i> ថ្ងៃចូលនៅ</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-circle-check text-[10px]"></i> ស្ថានភាព</th>
+                  <th class="py-3.5 px-3 text-right"><i class="fa-solid fa-ellipsis-vertical text-[10px]"></i> សកម្មភាព</th>
+                </tr>
+              </thead>
+              <tbody id="tenants-table-body">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 4: INVOICES (វិក័យប័ត្រ) ==================== -->
+      <section id="section-invoices" class="hidden space-y-4">
+        
+        <!-- Filter Toolbar -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+              <input id="invoice-search" type="text" placeholder="ស្វែងរកតាមលេខប័ណ្ណ បន្ទប់ ឈ្មោះអ្នកជួល..." class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 bg-white">
+            </div>
+            <div class="flex flex-wrap sm:flex-nowrap gap-2">
+              <input id="invoice-month-filter" type="month" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono bg-white focus:ring-2 focus:ring-blue-500">
+              <select id="invoice-status-filter" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white focus:ring-2 focus:ring-blue-500">
+                <option value="all">ស្ថានភាពទាំងអស់</option>
+                <option value="unpaid">● មិនទាន់បង់</option>
+                <option value="paid">✓ បានបង់រួច</option>
+                <option value="partial">◐ បង់មួយផ្នែក</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+              <button onclick="exportInvoicesCsv()" class="flex-1 md:flex-none px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                <i class="fa-solid fa-file-csv text-emerald-600 text-sm"></i> <span>ទាញយក CSV</span>
+              </button>
+              <button onclick="openCreateInvoiceModal()" class="flex-1 md:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition whitespace-nowrap shadow-xs active:scale-98">
+                <i class="fa-solid fa-plus-circle text-sm"></i> <span>ចេញវិក្កយបត្រ</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table View for Invoices (Responsive Scroll on Mobile) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[850px]">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-receipt text-[10px]"></i> លេខវិក្កយបត្រ</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-door-closed text-[10px]"></i> បន្ទប់</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-user text-[10px]"></i> អ្នកជួល</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-calendar text-[10px]"></i> ខែ</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-money-bill-wave text-[10px]"></i> ទឹកប្រាក់សរុប</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-circle-dot text-[10px]"></i> ស្ថានភាព</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-sliders text-[10px]"></i> ប្តូរស្ថានភាព</th>
+                  <th class="py-3.5 px-3 text-right"><i class="fa-solid fa-gear text-[10px]"></i> សកម្មភាព</th>
+                </tr>
+              </thead>
+              <tbody id="invoices-table-body">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 5: PAYMENTS (ការបង់ប្រាក់) ==================== -->
+      <section id="section-payments" class="hidden space-y-4">
+        
+        <!-- Payment summary metrics -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1 card-hover">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">សរុបប្រាក់បានបង់</span>
+              <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+            </div>
+            <div id="payments-total-khr" class="text-xl sm:text-2xl font-extrabold text-emerald-600 font-mono">0 ៛</div>
+            <div id="payments-total-usd" class="text-xs text-slate-400 font-mono">$0.00</div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs card-hover">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">ប្រតិបត្តិការ</span>
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-receipt"></i>
+              </div>
+            </div>
+            <div id="payments-total-count" class="text-xl sm:text-2xl font-extrabold text-blue-600 font-mono">0</div>
+            <div class="text-[10px] text-slate-400">បានទូទាត់ជោគជ័យ</div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs card-hover">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] text-slate-400 uppercase font-semibold">វិធីសាស្រ្ត</span>
+              <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-qrcode"></i>
+              </div>
+            </div>
+            <div class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+              <span>ABA KHQR</span>
+            </div>
+            <div class="text-[10px] text-slate-400">ស្កេនទូទាត់រហ័ស</div>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+          <div class="relative w-full">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+            <input id="payment-search" type="text" placeholder="ស្វែងរកតាមលេខប័ណ្ណ បន្ទប់ ឬឈ្មោះអ្នកជួល..." class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 bg-white">
+          </div>
+        </div>
+
+        <!-- Table View for Payments (Responsive Scroll on Mobile) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[750px]">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-hashtag text-[10px]"></i></th>
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-receipt text-[10px]"></i> លេខវិក្កយបត្រ</th>
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-door-closed text-[10px]"></i> បន្ទប់</th>
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-user text-[10px]"></i> អ្នកជួល</th>
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-calendar-check text-[10px]"></i> កាលបរិច្ឆេទបង់</th>
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-money-bill-wave text-[10px]"></i> ចំនួនទឹកប្រាក់</th>
+                  <th class="py-3.5 px-4 text-right"><i class="fa-solid fa-gear text-[10px]"></i> សកម្មភាព</th>
+                </tr>
+              </thead>
+              <tbody id="payments-table-body">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 6: UTILITIES (ទឹក / ភ្លើង) ==================== -->
+      <section id="section-utilities" class="hidden space-y-4">
+        
+        <!-- Utility Formula Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+          
+          <!-- Electricity Formula Card -->
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-bolt-lightning text-amber-500"></i>
+                <span>គណនាថ្លៃភ្លើង</span>
+              </h3>
+              <span id="current-electric-rate" class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-mono font-bold">1,000 ៛/kWh</span>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3 text-xs space-y-1 font-mono text-slate-700 border border-slate-100">
+              <p><span class="text-blue-600 font-bold font-sans">រូបមន្ត:</span> Usage = New Meter - Old Meter</p>
+              <p><span class="text-blue-600 font-bold font-sans">ទឹកប្រាក់:</span> Amount = Usage × Price</p>
+              <p class="text-slate-500 text-[11px] pt-1 border-t border-slate-200 font-sans">
+                ឧទាហរណ៍: 2085 - 2007 = <b>78 kWh</b> | 78 × 1,000៛ = <b class="text-slate-900 font-mono">78,000៛</b>
+              </p>
+            </div>
+          </div>
+
+          <!-- Water Formula Card -->
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-droplet text-cyan-600"></i>
+                <span>គណនាថ្លៃទឹក</span>
+              </h3>
+              <span id="current-water-rate" class="px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200 text-xs font-mono font-bold">2,200 ៛/m³</span>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3 text-xs space-y-1 font-mono text-slate-700 border border-slate-100">
+              <p><span class="text-cyan-700 font-bold font-sans">រូបមន្ត:</span> Usage = New Meter - Old Meter</p>
+              <p><span class="text-cyan-700 font-bold font-sans">ទឹកប្រាក់:</span> Amount = Usage × Price</p>
+              <p class="text-slate-500 text-[11px] pt-1 border-t border-slate-200 font-sans">
+                ឧទាហរណ៍: 47 - 45 = <b>2 m³</b> | 2 × 2,200៛ = <b class="text-slate-900 font-mono">4,400៛</b>
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Toolbar -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-bold text-slate-700 whitespace-nowrap flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-days text-blue-600"></i> <span>កត់ត្រាសម្រាប់ខែ:</span>
+            </label>
+            <input id="utility-month-select" type="month" class="w-full sm:w-auto border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono bg-white focus:ring-2 focus:ring-blue-500">
+          </div>
+          <button onclick="saveAllUtilities()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition shadow-xs active:scale-98">
+            <i class="fa-solid fa-floppy-disk text-sm"></i> <span>រក្សាទុកលេខកុងទ័រទាំងអស់</span>
+          </button>
+        </div>
+
+        <!-- Table View for Utilities (Responsive Scroll on Mobile) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[950px]">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs font-bold">
+                  <th class="py-3.5 px-3 text-center"><i class="fa-solid fa-door-closed text-[10px]"></i> បន្ទប់</th>
+                  <th class="py-3.5 px-3"><i class="fa-solid fa-user text-[10px]"></i> អ្នកជួល</th>
+                  <th class="py-3.5 px-2 text-center bg-blue-50/40 text-blue-900 border-l border-slate-200">⚡ ភ្លើងចាស់</th>
+                  <th class="py-3.5 px-2 text-center bg-blue-50/40 text-blue-900">⚡ ភ្លើងថ្មី</th>
+                  <th class="py-3.5 px-3 text-center bg-blue-50/70 text-blue-950 font-extrabold border-r border-slate-200">⚡ ប្រើប្រាស់ / សរុប</th>
+                  <th class="py-3.5 px-2 text-center bg-cyan-50/40 text-cyan-900">💧 ទឹកចាស់</th>
+                  <th class="py-3.5 px-2 text-center bg-cyan-50/40 text-cyan-900">💧 ទឹកថ្មី</th>
+                  <th class="py-3.5 px-3 text-center bg-cyan-50/70 text-cyan-950 font-extrabold border-r border-slate-200">💧 ប្រើប្រាស់ / សរុប</th>
+                  <th class="py-3.5 px-3 text-right"><i class="fa-solid fa-money-bill-wave text-[10px]"></i> សរុប (៛)</th>
+                  <th class="py-3.5 px-3 text-center"><i class="fa-solid fa-gear text-[10px]"></i> សកម្មភាព</th>
+                </tr>
+              </thead>
+              <tbody id="utilities-table-body">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 7: REPORTS (របាយការណ៍) ==================== -->
+      <section id="section-reports" class="hidden space-y-4">
+        
+        <!-- Toolbar -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-days text-purple-600"></i> <span>របាយការណ៍ខែ:</span>
+            </label>
+            <input id="report-month-select" type="month" class="w-full sm:w-auto border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono bg-white focus:ring-2 focus:ring-blue-500">
+          </div>
+          <button onclick="window.printReport()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition shadow-xs active:scale-98">
+            <i class="fa-solid fa-print text-sm"></i> <span>បោះពុម្ពរបាយការណ៍</span>
+          </button>
+        </div>
+
+        <!-- Summary Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1.5 card-hover">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-500 uppercase font-semibold">ចំណូលសរុបប្រចាំខែ</span>
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-sack-dollar"></i>
+              </div>
+            </div>
+            <div id="rep-total-income-usd" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono">$0.00</div>
+            <div id="rep-total-income-khr" class="text-xs text-slate-400 font-mono">0 ៛</div>
+          </div>
+
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1.5 card-hover">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-emerald-600 uppercase font-semibold">ប្រមូលបានរួច</span>
+              <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+            </div>
+            <div id="rep-collected-usd" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono">$0.00</div>
+            <div id="rep-collected-khr" class="text-xs text-slate-400 font-mono">0 ៛</div>
+          </div>
+
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1.5 card-hover">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-rose-600 uppercase font-semibold">នៅខ្វះមិនទាន់បង់</span>
+              <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-clock"></i>
+              </div>
+            </div>
+            <div id="rep-pending-usd" class="text-2xl sm:text-3xl font-extrabold text-rose-600 font-mono">$0.00</div>
+            <div id="rep-pending-khr" class="text-xs text-slate-400 font-mono">0 ៛</div>
+          </div>
+        </div>
+
+        <!-- Breakdown Details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 border-b border-slate-100 pb-2.5 flex items-center gap-2">
+              <i class="fa-solid fa-chart-pie text-blue-600"></i>
+              <span>ការបែងចែកប្រភពចំណូល</span>
+            </h3>
+            <div class="space-y-3 text-xs">
+              <div class="flex justify-between py-1.5 border-b border-slate-50">
+                <span class="text-slate-600 flex items-center gap-1.5"><i class="fa-solid fa-house text-slate-400"></i> ថ្លៃឈ្នួលបន្ទប់សរុប:</span>
+                <span id="rep-room-rent-cost" class="font-bold font-mono text-slate-800">0 ៛</span>
+              </div>
+              <div class="flex justify-between py-1.5 border-b border-slate-50">
+                <span class="text-slate-600 flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-500"></i> ថ្លៃភ្លើងសរុប (<span id="rep-elec-usage">0 kWh</span>):</span>
+                <span id="rep-elec-cost" class="font-bold font-mono text-blue-800">0 ៛</span>
+              </div>
+              <div class="flex justify-between py-1.5 border-b border-slate-50">
+                <span class="text-slate-600 flex items-center gap-1.5"><i class="fa-solid fa-droplet text-cyan-500"></i> ថ្លៃទឹកសរុប (<span id="rep-water-usage">0 m³</span>):</span>
+                <span id="rep-water-cost" class="font-bold font-mono text-cyan-800">0 ៛</span>
+              </div>
+              <div class="flex justify-between py-1.5">
+                <span class="text-slate-600 flex items-center gap-1.5"><i class="fa-solid fa-trash-can text-slate-400"></i> ថ្លៃសំរាម & សេវាផ្សេងៗ:</span>
+                <span id="rep-trash-cost" class="font-bold font-mono text-slate-800">0 ៛</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 border-b border-slate-100 pb-2.5 flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-emerald-600"></i>
+              <span>អត្រាជួលបន្ទប់</span>
+            </h3>
+            <div class="space-y-3">
+              <div class="flex justify-between items-baseline">
+                <span id="rep-occupancy-rate" class="text-3xl font-extrabold text-slate-900 font-mono">0%</span>
+                <span id="rep-occupancy-detail" class="text-xs text-slate-500 font-mono">0 / 0 បន្ទប់</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden p-0.5">
+                <div id="rep-occupancy-bar" class="bg-slate-900 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================== TAB 8: USERS (Users & Staff) ==================== -->
+      <section id="section-users" class="hidden space-y-4">
+        
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg flex-shrink-0">
+              <i class="fa-solid fa-users-gear"></i>
+            </div>
+            <div>
+              <h3 class="text-xs sm:text-sm font-bold text-slate-800">អ្នកប្រើប្រាស់ & បុគ្គលិក</h3>
+              <p class="text-[11px] text-slate-400 font-sans">Staff & System User Accounts</p>
+            </div>
+          </div>
+          <button onclick="openUserModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs active:scale-98">
+            <i class="fa-solid fa-user-plus"></i> <span>បន្ថែមគណនី</span>
+          </button>
+        </div>
+
+        <!-- Table View for Users (Responsive Scroll on Mobile) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[750px]">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-hashtag text-[10px]"></i></th>
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-user text-[10px]"></i> ឈ្មោះ</th>
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-envelope text-[10px]"></i> អ៊ីមែល</th>
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-phone text-[10px]"></i> លេខទូរស័ព្ទ</th>
+                  <th class="py-3.5 px-4"><i class="fa-solid fa-user-shield text-[10px]"></i> តួនាទី</th>
+                  <th class="py-3.5 px-4 text-right"><i class="fa-solid fa-gear text-[10px]"></i> សកម្មភាព</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 9: SETTINGS & SUPABASE ==================== -->
+      <section id="section-settings" class="hidden space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          
+          <!-- General Profile & Rates -->
+          <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+              <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-bold">
+                <i class="fa-solid fa-building-user"></i>
+              </div>
+              <div>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-800">ព័ត៌មានម្ចាស់ផ្ទះ & តម្លៃទឹក-ភ្លើង</h3>
+                <p class="text-[11px] text-slate-400 font-sans">Landlord Profile & Base Utility Rates</p>
+              </div>
+            </div>
+
+            <form id="general-settings-form" class="space-y-3.5 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <i class="fa-solid fa-user-tie text-blue-600"></i> ឈ្មោះម្ចាស់ផ្ទះ
+                </label>
+                <input id="setting-landlord-name" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-phone text-emerald-600"></i> លេខទូរស័ព្ទ
+                  </label>
+                  <input id="setting-landlord-phone" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-money-bill-transfer text-amber-600"></i> អត្រាប្តូរប្រាក់ (1$ = ? ៛)
+                  </label>
+                  <input id="setting-exchange-rate" type="number" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <i class="fa-solid fa-location-dot text-rose-500"></i> អាសយដ្ឋាន
+                </label>
+                <input id="setting-landlord-address" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">
+              </div>
+
+              <!-- Rates Grid -->
+              <div class="grid grid-cols-2 gap-2.5 sm:gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                <div>
+                  <label class="block font-semibold text-slate-800 mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-bolt text-amber-500"></i> ថ្លៃភ្លើង (៛/kWh)
+                  </label>
+                  <input id="setting-elec-rate" type="number" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-800 mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-droplet text-cyan-600"></i> ថ្លៃទឹក (៛/m³)
+                  </label>
+                  <input id="setting-water-rate" type="number" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-trash-can text-slate-400"></i> ថ្លៃសំរាម (៛/ខែ)
+                  </label>
+                  <input id="setting-trash-fee" type="number" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-wifi text-indigo-500"></i> ថ្លៃ WiFi (៛/ខែ)
+                  </label>
+                  <input id="setting-wifi-fee" type="number" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+              </div>
+
+              <!-- KHQR details & QR Card Preview -->
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="font-bold text-xs text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-red-600"></i> ស្កេនទូទាត់ប្រាក់ ABA KHQR
+                  </div>
+                  <span class="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-semibold">ABA QR</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold text-slate-700 mb-1">ឈ្មោះម្ចាស់គណនី</label>
+                    <input id="setting-khqr-name" type="text" value="PHANET THAI" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg uppercase font-mono text-xs focus:ring-2 focus:ring-blue-500 bg-white">
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-slate-700 mb-1">គណនី USD ($)</label>
+                    <input id="setting-khqr-acc" type="text" value="008 270 003" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono text-xs focus:ring-2 focus:ring-blue-500 bg-white">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold text-slate-700 mb-1">គណនី KHR (៛)</label>
+                    <input id="setting-khqr-acc-khr" type="text" value="008 270 004" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono text-xs focus:ring-2 focus:ring-blue-500 bg-white">
+                  </div>
+                  <div class="flex items-center gap-3 pt-1">
+                    <img src="img/aba_qr.png?v=2" alt="ABA KHQR" class="w-10 h-14 object-cover rounded-lg border border-slate-300 shadow-xs cursor-pointer" onclick="window.open(this.src, '_blank')" title="ចុចដើម្បីមើលធំ">
+                    <div class="text-[11px] text-slate-500">
+                      <div class="font-semibold text-slate-700">រូបភាព QR Code</div>
+                      <div class="text-[10px] text-emerald-600 font-medium">✓ បានភ្ជាប់ (img/aba_qr.png)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <i class="fa-solid fa-pen text-slate-400"></i> កំណត់ចំណាំលើវិក្កយបត្រ
+                </label>
+                <textarea id="setting-invoice-note" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">សូមទូទាត់ប្រាក់ឱ្យបានមុនថ្ងៃទី ០៥ នៃខែនីមួយៗ។ សូមអរគុណ!</textarea>
+              </div>
+
+              <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition shadow-xs flex items-center justify-center gap-2 active:scale-98">
+                <i class="fa-solid fa-check"></i> <span>រក្សាទុកការកំណត់ទូទៅ</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Supabase Cloud Database Config & Backup -->
+          <div class="space-y-4">
+            
+            <!-- Supabase Database Card -->
+            <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold">
+                    <i class="fa-solid fa-database"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-800">Supabase Cloud Database</h3>
+                    <p class="text-[11px] text-slate-400 font-mono">PostgreSQL Pooler</p>
+                  </div>
+                </div>
+                <div id="supa-connected-tag">
+                  <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    PostgreSQL
+                  </span>
+                </div>
+              </div>
+
+              <!-- Database Credentials Form -->
+              <form id="supabase-settings-form" class="space-y-3 text-xs">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-server text-emerald-600"></i> Database Host
+                  </label>
+                  <input id="supa-host" type="text" value="aws-0-ap-southeast-1.pooler.supabase.com" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono text-[11px] bg-white focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                      <i class="fa-solid fa-user-lock text-slate-500"></i> Database User
+                    </label>
+                    <input id="supa-user" type="text" value="postgres.rsaxtgzmyzinvyuimthi" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono text-[11px] bg-white focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                      <i class="fa-solid fa-hard-drive text-slate-500"></i> Database Name
+                    </label>
+                    <input id="supa-database" type="text" value="postgres" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono text-[11px] bg-white focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                      <i class="fa-solid fa-network-wired text-slate-500"></i> Port
+                    </label>
+                    <input id="supa-port" type="number" value="5432" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono text-[11px] focus:ring-2 focus:ring-emerald-500 bg-white">
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                      <i class="fa-solid fa-key text-amber-500"></i> Database Password
+                    </label>
+                    <input id="supa-password" type="password" placeholder="បញ្ចូល Database Password" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono text-[11px] focus:ring-2 focus:ring-emerald-500 bg-white">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-link text-blue-500"></i> Supabase URL
+                  </label>
+                  <input id="supa-url" type="text" value="https://rsaxtgzmyzinvyuimthi.supabase.co" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono text-[11px] bg-white focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                  <button type="submit" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition shadow-xs flex items-center justify-center gap-1.5 active:scale-98">
+                    <i class="fa-solid fa-plug"></i> <span>រក្សាទុក & ភ្ជាប់ Supabase</span>
+                  </button>
+                  <button type="button" onclick="handleClearSupabase()" class="py-2 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-medium transition flex items-center gap-1">
+                    <i class="fa-solid fa-plug-circle-xmark"></i> <span>ផ្តាច់</span>
+                  </button>
+                </div>
+              </form>
+
+              <!-- Sync Action Buttons -->
+              <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
+                <button onclick="handleSyncSupabase()" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-98">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> <span>Sync ទៅ Supabase</span>
+                </button>
+                <button onclick="handlePullSupabase()" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-98">
+                  <i class="fa-solid fa-cloud-arrow-down"></i> <span>Pull ពី Supabase</span>
+                </button>
+              </div>
+              <div id="supabase-sync-status-msg" class="text-xs text-center font-semibold text-emerald-600 min-h-[16px]"></div>
+            </div>
+
+            <!-- Backup & Restore -->
+            <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-3.5">
+              <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-box-archive text-blue-600"></i>
+                <span>Backup & Restore ទិន្នន័យ</span>
+              </h3>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <button onclick="downloadJsonBackup()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl font-semibold text-slate-700 flex items-center justify-center gap-2 transition shadow-xs">
+                  <i class="fa-solid fa-download text-blue-600"></i> <span>ទាញយក Backup (JSON)</span>
+                </button>
+                
+                <label class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl font-semibold text-slate-700 flex items-center justify-center gap-2 transition cursor-pointer text-center shadow-xs">
+                  <i class="fa-solid fa-upload text-emerald-600"></i> <span>បញ្ចូល Backup (Restore)</span>
+                  <input id="import-file-input" type="file" accept=".json" class="hidden">
+                </label>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                <span class="text-slate-400">ទិន្នន័យគំរូដើម:</span>
+                <button onclick="handleResetData()" class="text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1">
+                  <i class="fa-solid fa-rotate-left text-[11px]"></i> Reset to Default Data
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- ==================== MOBILE BOTTOM NAVIGATION BAR ==================== -->
+  <nav id="mobile-bottom-nav" class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-30 md:hidden flex justify-around items-center px-1.5 py-1.5 shadow-sm">
+    <button id="nav-mobile-dashboard" onclick="switchTab('dashboard')" class="mobile-nav-btn active">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>ផ្ទាំងគ្រប់គ្រង</span>
+    </button>
+    <button id="nav-mobile-rooms" onclick="switchTab('rooms')" class="mobile-nav-btn">
+      <i class="fa-solid fa-door-open"></i>
+      <span>បន្ទប់</span>
+    </button>
+    <button id="nav-mobile-invoices" onclick="switchTab('invoices')" class="mobile-nav-btn">
+      <i class="fa-solid fa-file-invoice-dollar"></i>
+      <span>វិក្កយបត្រ</span>
+    </button>
+    <button id="nav-mobile-utilities" onclick="switchTab('utilities')" class="mobile-nav-btn">
+      <i class="fa-solid fa-bolt-lightning"></i>
+      <span>ទឹក-ភ្លើង</span>
+    </button>
+    <button id="nav-mobile-more" onclick="toggleMobileSidebar()" class="mobile-nav-btn">
+      <i class="fa-solid fa-bars"></i>
+      <span>មីនុយ</span>
+    </button>
+  </nav>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- MODAL: ADD / EDIT ROOM -->
+  <div id="room-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 animate-fade-in max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <h3 id="room-modal-title" class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-door-open text-blue-600"></i> <span>បន្ថែមបន្ទប់ថ្មី</span>
+        </h3>
+        <button onclick="closeRoomModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <form id="room-form" class="space-y-3.5 text-xs">
+        <input type="hidden" id="room-id">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-hashtag text-slate-400"></i> លេខបន្ទប់*
+            </label>
+            <input id="room-number" type="text" placeholder="101, A201..." class="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-blue-500 bg-white" required>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-layer-group text-slate-400"></i> ជាន់ទី
+            </label>
+            <input id="room-floor" type="number" value="1" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-shapes text-slate-400"></i> ប្រភេទបន្ទប់
+            </label>
+            <select id="room-type" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500">
+              <option value="fan">បន្ទប់កង្ហារ</option>
+              <option value="ac">បន្ទប់ម៉ាស៊ីនត្រជាក់</option>
+              <option value="vip">បន្ទប់ VIP</option>
+              <option value="studio">បន្ទប់ Studio</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-dot text-slate-400"></i> ស្ថានភាព
+            </label>
+            <select id="room-status" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500">
+              <option value="available">ទំនេរ</option>
+              <option value="occupied">មានអ្នកជួល</option>
+              <option value="maintenance">កំពុងជួសជុល</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-dollar-sign text-emerald-600"></i> ថ្លៃឈ្នួល/ខែ ($)*
+            </label>
+            <input id="room-price" type="number" step="any" placeholder="100" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white" required>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-shield-halved text-amber-500"></i> ប្រាក់កក់ ($)
+            </label>
+            <input id="room-deposit" type="number" step="any" placeholder="100" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-align-left text-slate-400"></i> ការពិពណ៌នា
+          </label>
+          <textarea id="room-description" rows="2" placeholder="ឧ. បន្ទប់កង្ហារ មានបង្អួចធំ ខ្យល់ចេញចូលស្រួល..." class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeRoomModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-medium flex items-center gap-1">
+            <i class="fa-solid fa-xmark"></i> <span>បោះបង់</span>
+          </button>
+          <button type="submit" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold shadow-xs flex items-center gap-1.5 active:scale-98">
+            <i class="fa-solid fa-check"></i> <span>រក្សាទុក</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT TENANT -->
+  <div id="tenant-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-4 animate-fade-in text-xs max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <h3 id="tenant-modal-title" class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-blue-600"></i> <span>ចុះឈ្មោះអ្នកជួលថ្មី</span>
+        </h3>
+        <button onclick="closeTenantModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <form id="tenant-form" class="space-y-3.5">
+        <input type="hidden" id="tenant-id">
+        <input type="hidden" id="tenant-photo-data">
+        
+        <!-- Photo Upload Preview -->
+        <div class="flex items-center gap-3.5 p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+          <div class="relative w-14 h-14 flex-shrink-0 flex items-center justify-center">
+            <img id="tenant-photo-preview" src="" class="w-14 h-14 rounded-full object-cover border-2 border-blue-600 shadow-xs hidden">
+            <div id="tenant-photo-placeholder" class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-user"></i>
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-image text-blue-600"></i> រូបថតអ្នកជួល
+            </label>
+            <input type="file" id="tenant-photo-input" accept="image/*" class="text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 cursor-pointer w-full">
+            <p class="text-[10px] text-slate-400 mt-0.5">គាំទ្ររូបភាព PNG, JPG, WebP</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-user text-slate-400"></i> ឈ្មោះអ្នកជួល*
+            </label>
+            <input id="tenant-name" type="text" placeholder="សុខ ដារ៉ា..." class="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-blue-500 bg-white" required>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-venus-mars text-slate-400"></i> ភេទ
+            </label>
+            <select id="tenant-gender" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500">
+              <option value="male">ប្រុស</option>
+              <option value="female">ស្រី</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-phone text-slate-400"></i> លេខទូរស័ព្ទ*
+            </label>
+            <input id="tenant-phone" type="text" placeholder="012 345 678" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white" required>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-address-card text-slate-400"></i> លេខអត្តសញ្ញាណប័ណ្ណ
+            </label>
+            <input id="tenant-idcard" type="text" placeholder="010203040" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-location-dot text-slate-400"></i> អាសយដ្ឋានដើម / ស្រុកកំណើត
+          </label>
+          <input id="tenant-address" type="text" placeholder="ខេត្តកណ្តាល, ភ្នំពេញ..." class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-door-closed text-blue-600"></i> ជ្រើសរើសបន្ទប់ស្នាក់នៅ
+            </label>
+            <select id="tenant-room-id" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500">
+              <!-- Dynamic room options -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-dot text-slate-400"></i> ស្ថានភាព
+            </label>
+            <select id="tenant-status" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500">
+              <option value="active">កំពុងស្នាក់នៅ</option>
+              <option value="inactive">បានចាកចេញ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-calendar-days text-slate-400"></i> ថ្ងៃចូលនៅ
+            </label>
+            <input id="tenant-start-date" type="date" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-phone-volume text-rose-500"></i> លេខទូរស័ព្ទបន្ទាន់
+            </label>
+            <input id="tenant-emergency" type="text" placeholder="098..." class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeTenantModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-medium flex items-center gap-1">
+            <i class="fa-solid fa-xmark"></i> <span>បោះបង់</span>
+          </button>
+          <button type="submit" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold shadow-xs flex items-center gap-1.5 active:scale-98">
+            <i class="fa-solid fa-check"></i> <span>រក្សាទុក</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PHOTO / ID CARD VIEWER -->
+  <div id="photo-viewer-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-4 shadow-2xl animate-fade-in max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
+        <h3 id="photo-viewer-title" class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-image text-blue-600"></i> <span>រូបថត / អត្តសញ្ញាណប័ណ្ណ</span>
+        </h3>
+        <button onclick="window.closePhotoViewer()" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+      <div class="max-h-[65vh] overflow-auto flex items-center justify-center bg-slate-950 rounded-xl p-2 flex-1">
+        <img id="photo-viewer-img" src="" class="max-h-[60vh] w-auto rounded-lg object-contain">
+      </div>
+      <div class="mt-3 text-right">
+        <button onclick="window.closePhotoViewer()" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium">បិទ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD USER -->
+  <div id="user-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 animate-fade-in max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-blue-600"></i> <span>បន្ថែមគណនីអ្នកប្រើប្រាស់ថ្មី</span>
+        </h3>
+        <button onclick="closeUserModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <form id="user-form" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-user text-slate-400"></i> ឈ្មោះ*
+          </label>
+          <input id="new-user-name" type="text" placeholder="សុខ ចិន្តា" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white" required>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-envelope text-slate-400"></i> អ៊ីមែល*
+          </label>
+          <input id="new-user-email" type="email" placeholder="user@rental.com" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white" required>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-phone text-slate-400"></i> លេខទូរស័ព្ទ
+            </label>
+            <input id="new-user-phone" type="text" placeholder="012..." class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 bg-white">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-user-shield text-slate-400"></i> តួនាទី
+            </label>
+            <select id="new-user-role" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500">
+              <option value="staff">បុគ្គលិក</option>
+              <option value="admin">ម្ចាស់ប្រព័ន្ធ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-medium flex items-center gap-1">
+            <i class="fa-solid fa-xmark"></i> <span>បោះបង់</span>
+          </button>
+          <button type="submit" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold shadow-xs flex items-center gap-1.5 active:scale-98">
+            <i class="fa-solid fa-check"></i> <span>រក្សាទុក</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE / EDIT INVOICE -->
+  <div id="create-invoice-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-4 animate-fade-in text-xs max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-calculator text-blue-600"></i> <span>ចេញវិក្កយបត្រប្រចាំខែ</span>
+        </h3>
+        <button onclick="closeCreateInvoiceModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <form id="create-invoice-form" class="space-y-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-door-closed text-blue-600"></i> ជ្រើសរើសបន្ទប់*
+            </label>
+            <select id="inv-create-room" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-medium" required>
+              <!-- Dynamic -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-calendar text-slate-400"></i> ប្រចាំខែ*
+            </label>
+            <input id="inv-create-month" type="month" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono bg-white" required>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-user text-slate-400"></i> ឈ្មោះអ្នកជួល
+            </label>
+            <input id="inv-tenant-name" type="text" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg bg-white">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-phone text-slate-400"></i> លេខទូរស័ព្ទ
+            </label>
+            <input id="inv-tenant-phone" type="text" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono bg-white">
+          </div>
+        </div>
+
+        <!-- Room Rent -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-dollar-sign text-emerald-600"></i> ថ្លៃបន្ទប់ជួល ($ USD)
+            </label>
+            <input id="inv-room-usd" type="number" step="any" oninput="window.handleRoomUsdChange()" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono bg-white">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-money-bill text-slate-500"></i> ថ្លៃបន្ទប់គិតជាប្រាក់រៀល (៛)
+            </label>
+            <input id="inv-room-khr" type="number" oninput="window.handleRoomKhrChange()" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg font-mono font-bold text-slate-900 bg-white">
+          </div>
+        </div>
+
+        <!-- Electricity -->
+        <div class="bg-amber-50/40 p-3.5 rounded-xl border border-amber-100 space-y-2">
+          <span class="font-bold text-slate-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-bolt text-amber-500"></i> <span>ថ្លៃភ្លើង</span>
+          </span>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-0.5">អំណានចាស់</label>
+              <input id="inv-elec-old" type="number" step="any" oninput="window.recalcInvoiceGrandTotal()" class="w-full px-2 py-1.5 border border-slate-200 rounded-lg font-mono text-center bg-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-0.5">អំណានថ្មី</label>
+              <input id="inv-elec-new" type="number" step="any" oninput="window.recalcInvoiceGrandTotal()" class="w-full px-2 py-1.5 border border-amber-300 rounded-lg font-mono text-center font-bold text-slate-900 bg-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-0.5">តម្លៃ/kWh</label>
+              <input id="inv-elec-rate" type="number" oninput="window.recalcInvoiceGrandTotal()" class="w-full px-2 py-1.5 border border-slate-200 rounded-lg font-mono text-center bg-white">
+            </div>
+          </div>
+          <div class="text-right text-xs text-slate-800 pt-1 font-medium">
+            ប្រើប្រាស់: <b id="inv-elec-usage" class="font-mono">0</b> kWh = <b id="inv-elec-total" class="font-mono text-slate-900">0 ៛</b>
+          </div>
+        </div>
+
+        <!-- Water -->
+        <div class="bg-cyan-50/40 p-3.5 rounded-xl border border-cyan-100 space-y-2">
+          <span class="font-bold text-slate-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-droplet text-cyan-600"></i> <span>ថ្លៃទឹក</span>
+          </span>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-0.5">អំណានចាស់</label>
+              <input id="inv-water-old" type="number" step="any" oninput="window.recalcInvoiceGrandTotal()" class="w-full px-2 py-1.5 border border-slate-200 rounded-lg font-mono text-center bg-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-0.5">អំណានថ្មី</label>
+              <input id="inv-water-new" type="number" step="any" oninput="window.recalcInvoiceGrandTotal()" class="w-full px-2 py-1.5 border border-cyan-300 rounded-lg font-mono text-center font-bold text-slate-900 bg-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-0.5">តម្លៃ/m³</label>
+              <input id="inv-water-rate" type="number" oninput="window.recalcInvoiceGrandTotal()" class="w-full px-2 py-1.5 border border-slate-200 rounded-lg font-mono text-center bg-white">
+            </div>
+          </div>
+          <div class="text-right text-xs text-slate-800 pt-1 font-medium">
+            ប្រើប្រាស់: <b id="inv-water-usage" class="font-mono">0</b> m³ = <b id="inv-water-total" class="font-mono text-slate-900">0 ៛</b>
+          </div>
+        </div>
+
+        <!-- Other Fees -->
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="text-slate-600 block mb-1">ថ្លៃសំរាម (៛)</label>
+            <input id="inv-trash-fee" type="number" oninput="window.recalcInvoiceGrandTotal()" class="w-full px-2 py-1.5 border border-slate-200 rounded-lg font-mono bg-white">
+          </div>
+          <div>
+            <label class="text-slate-600 block mb-1">ថ្លៃ WiFi (៛)</label>
+            <input id="inv-wifi-fee" type="number" oninput="window.recalcInvoiceGrandTotal()" class="w-full px-2 py-1.5 border border-slate-200 rounded-lg font-mono bg-white">
+          </div>
+          <div>
+            <label class="text-slate-600 block mb-1">ផ្សេងៗ (៛)</label>
+            <input id="inv-other-fee" type="number" oninput="window.recalcInvoiceGrandTotal()" class="w-full px-2 py-1.5 border border-slate-200 rounded-lg font-mono bg-white">
+          </div>
+        </div>
+
+        <!-- Grand Total preview -->
+        <div class="p-3.5 bg-slate-900 text-white rounded-xl flex items-center justify-between shadow-xs">
+          <span class="font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-calculator text-emerald-400"></i> សរុបត្រូវទូទាត់:
+          </span>
+          <div class="text-right">
+            <span id="inv-grand-khr" class="text-lg sm:text-xl font-bold font-mono text-emerald-400 block">0 ៛</span>
+            <span id="inv-grand-usd" class="text-xs text-slate-300 font-mono">$0.00</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeCreateInvoiceModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-medium flex items-center gap-1">
+            <i class="fa-solid fa-xmark"></i> <span>បោះបង់</span>
+          </button>
+          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-xs flex items-center gap-2 active:scale-98">
+            <i class="fa-solid fa-receipt"></i> <span>រក្សាទុក & មើលប័ណ្ណ</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: VIEW & PRINT INVOICE -->
+  <div id="invoice-view-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="bg-slate-100 rounded-2xl max-w-2xl w-full p-3.5 sm:p-5 shadow-2xl my-4 animate-fade-in flex flex-col max-h-[92vh]">
+      
+      <!-- Top Action Bar (No print) -->
+      <div class="no-print flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-slate-200 gap-2">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-blue-600"></i>
+          <span class="text-xs sm:text-sm font-bold text-slate-800">ទិដ្ឋភាពវិក្កយបត្រ (Invoice Preview)</span>
+        </div>
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button onclick="downloadInvoicePdf()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition active:scale-98">
+            <i class="fa-solid fa-file-pdf"></i> <span class="hidden sm:inline">ទាញយកជា</span> PDF
+          </button>
+          <button onclick="printInvoice()" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition active:scale-98">
+            <i class="fa-solid fa-print"></i> <span>បោះពុម្ព</span>
+          </button>
+          <button onclick="closeInvoiceViewModal()" class="px-3.5 py-1.5 bg-white hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium border border-slate-300 transition">
+            បិទ
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Document Area -->
+      <div class="overflow-y-auto flex-1 bg-white rounded-xl shadow-inner border border-slate-200 p-2 sm:p-4">
+        <div id="invoice-render-content">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Main ES Module Bootstrap -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>

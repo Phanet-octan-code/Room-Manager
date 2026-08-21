@@ -1,0 +1,666 @@
+/* ============================================
+   បន្ទប់ជួល Management System — Ultra-Clear Modern UI
+   Palette: Crystal-Clear Minimalist (High Definition Crisp White / Slate)
+   Font: Battambang (Khmer) + Outfit (Numbers/English)
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Battambang:wght@300;400;700;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ── Ultra-Clear Design Tokens ── */
+:root {
+  --font-khmer: 'Battambang', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-en: 'Battambang', 'Outfit', sans-serif;
+
+  /* Fresh & Luminous Canvas System */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f1f5f9;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+  
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+
+  /* Fresh High-Definition Accent Colors */
+  --color-primary: #0f172a;
+  --color-blue: #2563eb;
+  --color-blue-soft: #eff6ff;
+  --color-emerald: #059669;
+  --color-emerald-soft: #ecfdf5;
+  --color-rose: #e11d48;
+  --color-rose-soft: #fff1f2;
+  --color-amber: #d97706;
+  --color-amber-soft: #fffbeb;
+  --color-cyan: #0891b2;
+  --color-cyan-soft: #ecfeff;
+
+  /* Crisp Fresh Shadows */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03);
+  --shadow-toast: 0 12px 32px rgba(15, 23, 42, 0.12);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Safe Area for Mobile */
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Global Reset & Font ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-khmer);
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 10% 10%, rgba(224, 238, 255, 0.6) 0px, transparent 40%),
+    radial-gradient(at 90% 15%, rgba(209, 250, 229, 0.45) 0px, transparent 45%),
+    radial-gradient(at 50% 90%, rgba(241, 245, 249, 0.8) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.7;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  overflow-x: hidden;
+}
+
+button, input, select, textarea, optgroup, table, th, td, label, p, span, div, h1, h2, h3, h4, h5, h6, a {
+  font-family: var(--font-khmer);
+}
+
+/* ── FontAwesome Icon Protection ── */
+i.fa-solid, i.fa-regular, i.fa-brands, i.fa, i.fas, i.far, i.fab,
+[class*="fa-"], [class^="fa-"],
+.fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands,
+.fa::before, .fas::before, .far::before, .fab::before,
+.fa-solid::before, .fa-regular::before, .fa-brands::before,
+[class^="fa-"]::before, [class*=" fa-"]::before {
+  font-family: "Font Awesome 6 Free", "FontAwesome", sans-serif !important;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+}
+
+.fa-brands, .fab,
+.fa-brands::before, .fab::before,
+[class^="fa-brands"]::before, [class*=" fa-brands"]::before {
+  font-family: "Font Awesome 6 Brands", "FontAwesome", sans-serif !important;
+}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ── Crisp Form Inputs (Increased Size for Readability) ── */
+input, select, textarea {
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+  font-size: 14px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.15) !important;
+  background-color: #ffffff !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+  font-size: 13.5px;
+}
+
+/* ── Interactive Buttons ── */
+button {
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* ── Sidebar Navigation Buttons ── */
+.sidebar-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #475569;
+  background-color: transparent;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+  text-align: left;
+  outline: none !important;
+  user-select: none;
+}
+
+.sidebar-nav-btn:focus,
+.sidebar-nav-btn:focus-visible,
+.sidebar-nav-btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.sidebar-nav-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.sidebar-nav-btn .nav-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.sidebar-nav-btn:hover .nav-icon-wrap {
+  background-color: #ffffff;
+  color: #2563eb;
+  border-color: #cbd5e1;
+}
+
+/* Active State: Clean Soft Blue Pill with Crisp Blue text & Solid Blue Icon */
+.sidebar-nav-btn.active {
+  background-color: #eff6ff !important;
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+  border-color: #bfdbfe !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08) !important;
+}
+
+.sidebar-nav-btn.active .nav-icon-wrap {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* ── Clear Card Surfaces ── */
+.clean-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-hover {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+.card-hover:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ── Status Badges ── */
+.badge-occupied {
+  background-color: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+}
+.badge-available {
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+}
+.badge-maintenance {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+}
+
+/* ── Crisp & Responsive Table Styling (Increased Font & Padding) ── */
+.overflow-x-auto {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+table {
+  width: 100%;
+  min-width: 650px;
+  font-size: 14px;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+}
+
+thead th {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+  color: #334155;
+  background-color: #f8fafc;
+  padding: 14px 16px;
+  white-space: nowrap;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+tbody td {
+  padding: 13px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+
+tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOutRight {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(30px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s var(--transition-normal) forwards;
+}
+
+/* ── Mobile Bottom Navigation Bar ── */
+#mobile-bottom-nav {
+  padding-bottom: calc(0.35rem + var(--safe-area-bottom));
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  min-width: 56px;
+}
+
+.mobile-nav-btn i {
+  font-size: 16px;
+  margin-bottom: 2px;
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.mobile-nav-btn.active {
+  color: #0f172a;
+  font-weight: 700;
+  background-color: #f1f5f9;
+}
+
+.mobile-nav-btn.active i {
+  color: #2563eb;
+}
+
+/* ── Toast Notification System ── */
+#toast-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  max-width: 400px;
+  width: calc(100vw - 32px);
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: var(--shadow-toast);
+  animation: slideInRight 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  position: relative;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.toast.toast-exit {
+  animation: slideOutRight 0.25s ease forwards;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 1px;
+}
+
+.toast-message {
+  font-size: 12px;
+  color: #475569;
+  word-break: break-word;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  padding: 0;
+}
+
+.toast-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2.5px;
+  border-radius: 0 0 14px 14px;
+}
+
+/* Toast variants */
+.toast-success .toast-icon { background: #ecfdf5; color: #10b981; }
+.toast-success .toast-title { color: #047857; }
+.toast-success .toast-progress { background: #10b981; }
+
+.toast-error .toast-icon { background: #fef2f2; color: #ef4444; }
+.toast-error .toast-title { color: #b91c1c; }
+.toast-error .toast-progress { background: #ef4444; }
+
+.toast-warning .toast-icon { background: #fffbeb; color: #f59e0b; }
+.toast-warning .toast-title { color: #b45309; }
+.toast-warning .toast-progress { background: #f59e0b; }
+
+.toast-info .toast-icon { background: #eff6ff; color: #3b82f6; }
+.toast-info .toast-title { color: #1d4ed8; }
+.toast-info .toast-progress { background: #3b82f6; }
+
+/* ── Confirm Dialog ── */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.15s ease forwards;
+}
+
+.confirm-dialog {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  animation: fadeInScale 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  text-align: center;
+  border: 1px solid #cbd5e1;
+}
+
+.confirm-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin: 0 auto 14px;
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.confirm-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.confirm-message {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.confirm-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+.confirm-btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+.confirm-btn-ok {
+  background: #0f172a;
+  color: white;
+}
+.confirm-btn-ok:hover {
+  background: #334155;
+}
+
+.confirm-btn-danger {
+  background: #ef4444;
+  color: white;
+}
+.confirm-btn-danger:hover {
+  background: #dc2626;
+}
+
+/* ── Print Styles ── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-area, #print-area *:not(i):not([class*="fa-"]) {
+    visibility: visible;
+    font-family: 'Battambang', sans-serif !important;
+  }
+  #print-area i[class*="fa-"], #print-area .fa, #print-area .fa-solid {
+    visibility: visible;
+    font-family: "Font Awesome 6 Free", "FontAwesome" !important;
+  }
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 15px;
+    background: white;
+    color: black;
+  }
+  .no-print {
+    display: none !important;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+}
+
+/* ── Mobile Responsive Refinements ── */
+@media (max-width: 767px) {
+  body {
+    font-size: 14.5px;
+  }
+
+  /* Mobile Sidebar Drawer */
+  #sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 60 !important;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  #sidebar-backdrop {
+    z-index: 55 !important;
+  }
+
+  #toast-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: 100%;
+    width: auto;
+  }
+}
+
+/* Desktop Sidebar */
+@media (min-width: 768px) {
+  #sidebar {
+    position: static !important;
+    transform: none !important;
+    height: auto !important;
+    z-index: 10 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ── Mobile Responsive Table Optimization ── */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.overflow-x-auto::-webkit-scrollbar {
+  height: 5px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+
+table {
+  font-family: 'Battambang', sans-serif !important;
+}
+
+table th, table td {
+  font-family: 'Battambang', sans-serif !important;
+}
+
