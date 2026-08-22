@@ -43,31 +43,31 @@ export function renderRooms() {
     const tenant = tenants.find(t => t.id === room.tenantId);
     const displayRoomNum = (room.roomNumber || '').replace(/^room[-_]?/i, '') || room.roomNumber;
 
-    let statusClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    let statusClass = 'bg-blue-50 text-blue-700 border-blue-200';
     let statusText = 'ទំនេរ';
-    let statusIcon = 'fa-circle-check';
+    let statusIcon = 'fa-door-open';
 
     if (room.status === 'occupied') {
-      statusClass = 'bg-rose-50 text-rose-700 border-rose-200';
+      statusClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
       statusText = 'មានអ្នកជួល';
-      statusIcon = 'fa-user-lock';
+      statusIcon = 'fa-user-check';
     } else if (room.status === 'maintenance') {
-      statusClass = 'bg-amber-50 text-amber-700 border-amber-200';
+      statusClass = 'bg-rose-50 text-rose-700 border-rose-200';
       statusText = 'កំពុងជួសជុល';
       statusIcon = 'fa-wrench';
     }
 
     let roomTypeLabel = 'បន្ទប់កង្ហារ';
-    let roomTypeIcon = 'fa-fan text-blue-500';
+    let roomTypeIcon = 'fa-fan text-blue-600';
     if (room.roomType === 'ac') {
       roomTypeLabel = 'បន្ទប់ម៉ាស៊ីនត្រជាក់';
-      roomTypeIcon = 'fa-snowflake text-cyan-500';
+      roomTypeIcon = 'fa-snowflake text-blue-600';
     } else if (room.roomType === 'vip') {
       roomTypeLabel = 'បន្ទប់ VIP';
-      roomTypeIcon = 'fa-crown text-amber-500';
+      roomTypeIcon = 'fa-crown text-blue-600';
     } else if (room.roomType === 'studio') {
       roomTypeLabel = 'បន្ទប់ Studio';
-      roomTypeIcon = 'fa-couch text-indigo-500';
+      roomTypeIcon = 'fa-couch text-blue-600';
     }
 
     const priceKhr = Math.round(room.price * (settings.exchangeRate || 4000));
@@ -90,33 +90,33 @@ export function renderRooms() {
       const { tenant, displayRoomNum, statusClass, statusText, statusIcon, roomTypeLabel, roomTypeIcon, priceKhr } = formatRoomData(room);
 
       return `
-        <tr class="border-b border-slate-100 hover:bg-slate-50 transition text-sm">
-          <td class="py-3.5 px-3.5 text-slate-500 font-mono text-xs text-center whitespace-nowrap">${idx + 1}</td>
+        <tr class="border-b border-slate-100 hover:bg-blue-50/30 transition text-sm">
+          <td class="py-3.5 px-3 text-slate-400 text-xs text-center whitespace-nowrap">${idx + 1}</td>
           
-          <!-- Room & Floor -->
+          <!-- Room & Floor (Blue) -->
           <td class="py-3.5 px-3 whitespace-nowrap">
             <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-blue-200">
                 <i class="fa-solid fa-door-closed"></i>
               </div>
               <div>
-                <div class="font-bold text-slate-900 text-sm">បន្ទប់ ${displayRoomNum}</div>
-                <div class="text-[11px] text-slate-500">ជាន់ទី ${room.floor || 1}</div>
+                <div class="font-bold text-slate-800 text-sm">បន្ទប់ ${displayRoomNum}</div>
+                <div class="text-[11px] text-slate-400">ជាន់ទី ${room.floor || 1}</div>
               </div>
             </div>
           </td>
 
           <!-- Type -->
           <td class="py-3.5 px-3 whitespace-nowrap">
-            <span class="px-2.5 py-1 bg-slate-50 text-slate-700 border border-slate-200/80 rounded-lg text-xs font-medium inline-flex items-center gap-1.5">
+            <span class="px-2.5 py-1 bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium inline-flex items-center gap-1.5">
               <i class="fa-solid ${roomTypeIcon} text-[11px]"></i>
               <span>${roomTypeLabel}</span>
             </span>
           </td>
 
-          <!-- Rent Price -->
+          <!-- Rent Price (Green) -->
           <td class="py-3.5 px-3 font-mono whitespace-nowrap">
-            <div class="font-bold text-slate-900 text-sm">$${room.price}</div>
+            <div class="font-bold text-emerald-700 text-sm">$${room.price}</div>
             <div class="text-[11px] text-slate-400 font-normal">≈ ${priceKhr.toLocaleString()} ៛</div>
           </td>
 
@@ -125,21 +125,24 @@ export function renderRooms() {
             $${room.deposit || 0}
           </td>
 
-          <!-- Tenant -->
+          <!-- Tenant (Blue link) -->
           <td class="py-3.5 px-3 whitespace-nowrap">
             ${tenant ? `
-              <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-[10px]">
+              <div onclick="window.viewTenantDetails('${tenant.id}')" class="flex items-center gap-2 cursor-pointer hover:bg-blue-50 p-1.5 rounded-xl transition group border border-transparent hover:border-blue-200" title="ចុចដើម្បីមើលព័ត៌មានលម្អិតអ្នកជួល">
+                <div class="w-6 h-6 rounded-full bg-blue-50 group-hover:bg-blue-600 group-hover:text-white text-blue-700 flex items-center justify-center font-bold text-[10px] transition border border-blue-200">
                   ${tenant.name.charAt(0)}
                 </div>
-                <span class="font-semibold text-slate-800 text-xs">${tenant.name}</span>
+                <span class="font-semibold text-slate-800 text-xs group-hover:text-blue-700 transition flex items-center gap-1">
+                  ${tenant.name}
+                  <i class="fa-solid fa-circle-info text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition"></i>
+                </span>
               </div>
             ` : `
               <span class="text-xs text-slate-400 italic">គ្មានអ្នកជួល</span>
             `}
           </td>
 
-          <!-- Status -->
+          <!-- Status (Blue / Green / Red) -->
           <td class="py-3.5 px-3 whitespace-nowrap">
             <span class="px-3 py-1 rounded-full text-xs font-semibold border inline-flex items-center gap-1.5 ${statusClass}">
               <i class="fa-solid ${statusIcon} text-[10px]"></i>
@@ -152,14 +155,14 @@ export function renderRooms() {
             ${room.description || '-'}
           </td>
 
-          <!-- Actions -->
+          <!-- Actions (Blue / Green / Red) -->
           <td class="py-3.5 px-3 text-right space-x-1.5 space-x-reverse whitespace-nowrap">
             ${room.status === 'occupied' ? `
-              <button onclick="window.quickCreateInvoice('${room.id}')" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold inline-flex items-center gap-1 transition" title="ចេញវិក្កយបត្រ">
+              <button onclick="window.quickCreateInvoice('${room.id}')" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold inline-flex items-center gap-1 border border-blue-200 transition" title="ចេញវិក្កយបត្រ">
                 <i class="fa-solid fa-file-invoice-dollar"></i> <span>ចេញប័ណ្ណ</span>
               </button>
             ` : `
-              <button onclick="window.assignTenantToRoom('${room.id}')" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold inline-flex items-center gap-1 transition" title="ដាក់អ្នកជួល">
+              <button onclick="window.assignTenantToRoom('${room.id}')" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold inline-flex items-center gap-1 border border-emerald-200 transition" title="ដាក់អ្នកជួល">
                 <i class="fa-solid fa-user-plus"></i> <span>ដាក់អ្នកជួល</span>
               </button>
             `}
@@ -181,51 +184,58 @@ export function renderRooms() {
       const { tenant, displayRoomNum, statusClass, statusText, statusIcon, roomTypeLabel, roomTypeIcon, priceKhr } = formatRoomData(room);
 
       return `
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-3">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm">
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200">
                 <i class="fa-solid fa-door-closed"></i>
               </div>
               <div>
-                <div class="font-bold text-blue-950 font-mono text-base leading-none">បន្ទប់ ${displayRoomNum}</div>
-                <div class="text-xs text-slate-400 font-mono mt-0.5">ជាន់ទី ${room.floor || 1} • ${roomTypeLabel}</div>
+                <span class="font-bold text-slate-800 text-sm block">បន្ទប់ ${displayRoomNum}</span>
+                <span class="text-xs text-slate-400">ជាន់ទី ${room.floor || 1} • ${roomTypeLabel}</span>
               </div>
             </div>
-            <span class="px-2.5 py-1 rounded-full text-xs font-semibold border inline-flex items-center gap-1.5 whitespace-nowrap ${statusClass}">
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold border inline-flex items-center gap-1 ${statusClass}">
               <i class="fa-solid ${statusIcon} text-[10px]"></i>
               <span>${statusText}</span>
             </span>
           </div>
 
-          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+          <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
             <div>
-              <span class="text-xs text-slate-500">ថ្លៃឈ្នួល/ខែ:</span>
-              <div class="text-base font-bold text-slate-900 font-mono">$${room.price} <span class="text-xs text-slate-400 font-normal">(≈ ${priceKhr.toLocaleString()} ៛)</span></div>
+              <span class="text-slate-400 block text-[10px]">ថ្លៃឈ្នួល / ខែ:</span>
+              <div class="text-sm font-bold font-mono text-emerald-700">$${room.price}</div>
+              <div class="text-[10px] text-slate-400 font-mono">≈ ${priceKhr.toLocaleString()} ៛</div>
             </div>
-            <div class="text-right">
-              <span class="text-xs text-slate-500">ប្រាក់កក់:</span>
-              <div class="text-xs font-mono font-semibold text-slate-700">$${room.deposit || 0}</div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">ប្រាក់កក់:</span>
+              <div class="text-xs font-mono font-semibold text-slate-700 mt-0.5">$${room.deposit || 0}</div>
             </div>
           </div>
 
           <div class="flex items-center justify-between text-xs text-slate-600">
             <span class="text-slate-400">អ្នកជួលបច្ចុប្បន្ន:</span>
-            <span class="font-semibold text-slate-800">${tenant ? tenant.name : '<span class="text-slate-400 font-normal italic">គ្មានអ្នកជួល</span>'}</span>
+            <span>
+              ${tenant ? `
+                <button onclick="window.viewTenantDetails('${tenant.id}')" class="font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1 border border-blue-200">
+                  <i class="fa-solid fa-user text-[10px]"></i> ${tenant.name}
+                </button>
+              ` : '<span class="text-slate-400 font-normal italic">គ្មានអ្នកជួល</span>'}
+            </span>
           </div>
 
-          <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-            <button onclick="window.editRoom('${room.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-semibold flex items-center gap-1 p-1">
-              <i class="fa-solid fa-pen-to-square"></i> <span>កែប្រែ</span>
-            </button>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
             <div class="flex items-center gap-2">
+              <button onclick="window.editRoom('${room.id}')" class="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-semibold flex items-center gap-1 border border-blue-200 transition">
+                <i class="fa-solid fa-pen-to-square text-xs"></i> <span>កែប្រែ</span>
+              </button>
               ${room.status === 'occupied' ? `
-                <button onclick="window.quickCreateInvoice('${room.id}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shadow-xs">
-                  <i class="fa-solid fa-file-invoice-dollar"></i> <span>ចេញវិក្កយបត្រ</span>
+                <button onclick="window.quickCreateInvoice('${room.id}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold flex items-center gap-1 shadow-2xs transition">
+                  <i class="fa-solid fa-file-invoice-dollar text-xs"></i> <span>ចេញប័ណ្ណ</span>
                 </button>
               ` : `
-                <button onclick="window.assignTenantToRoom('${room.id}')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shadow-xs">
-                  <i class="fa-solid fa-user-plus"></i> <span>ដាក់អ្នកជួល</span>
+                <button onclick="window.assignTenantToRoom('${room.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold flex items-center gap-1 shadow-2xs transition">
+                  <i class="fa-solid fa-user-plus text-xs"></i> <span>ដាក់អ្នកជួល</span>
                 </button>
               `}
               <button onclick="window.deleteRoom('${room.id}')" class="text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 transition" title="លុបបន្ទប់">

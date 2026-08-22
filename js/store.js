@@ -256,6 +256,7 @@ class Store {
       gender: tenant.gender || 'male',
       address: tenant.address || '',
       idCard: tenant.idCard || '',
+      idCardPhotoUrl: tenant.idCardPhotoUrl || tenant.idCardPhoto || tenant.idCardImage || '',
       status: tenant.status || 'active',
       emergencyPhone: tenant.emergencyPhone || '',
       photoUrl: tenant.photoUrl || ''

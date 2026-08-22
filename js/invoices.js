@@ -13,6 +13,7 @@ export function renderInvoices() {
 
   const currentMonth = monthFilter ? monthFilter.value : '';
   const invoices = store.getInvoices();
+  const tenants = store.getTenants();
 
   const filteredInvoices = invoices.filter(inv => {
     const matchMonth = !currentMonth || inv.month === currentMonth;
@@ -46,24 +47,33 @@ export function renderInvoices() {
   // 1. Render Desktop Table Body
   if (tableBody) {
     tableBody.innerHTML = filteredInvoices.map(inv => {
+      const tenant = tenants.find(t => (inv.roomId && t.roomId === inv.roomId) || (inv.tenantName && t.name.trim().toLowerCase() === inv.tenantName.trim().toLowerCase()));
+
       let statusBadge = '';
       if (inv.status === 'paid') {
-        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 inline-flex items-center gap-1.5"><i class="fa-solid fa-check text-[10px]"></i> បានបង់រួច</span>`;
+        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5"><i class="fa-solid fa-check text-[10px]"></i> បានបង់រួច</span>`;
       } else if (inv.status === 'partial') {
-        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 inline-flex items-center gap-1.5"><i class="fa-solid fa-clock text-[10px]"></i> បង់មួយផ្នែក</span>`;
+        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1.5"><i class="fa-solid fa-clock text-[10px]"></i> បង់មួយផ្នែក</span>`;
       } else {
-        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 inline-flex items-center gap-1.5"><i class="fa-solid fa-circle-exclamation text-[10px]"></i> មិនទាន់បង់</span>`;
+        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1.5"><i class="fa-solid fa-circle-exclamation text-[10px]"></i> មិនទាន់បង់</span>`;
       }
 
       return `
-        <tr class="border-b border-slate-100 hover:bg-slate-50 transition text-sm">
-          <td class="py-3.5 px-3 font-mono text-xs font-semibold text-blue-900 whitespace-nowrap">
+        <tr class="border-b border-slate-100 hover:bg-blue-50/30 transition text-sm">
+          <td class="py-3.5 px-3 font-mono text-xs font-semibold text-blue-800 whitespace-nowrap">
             <span class="flex items-center gap-1.5"><i class="fa-solid fa-receipt text-blue-500"></i> ${inv.invoiceNumber}</span>
           </td>
           <td class="py-3.5 px-3 font-bold font-mono text-slate-800 whitespace-nowrap">
-            <span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs">បន្ទប់ ${inv.roomNumber}</span>
+            <span class="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs border border-blue-100">បន្ទប់ ${inv.roomNumber}</span>
           </td>
-          <td class="py-3.5 px-3 font-medium text-slate-700 whitespace-nowrap">${inv.tenantName || '-'}</td>
+          <td class="py-3.5 px-3 font-medium text-slate-700 whitespace-nowrap">
+            ${tenant ? `
+              <button onclick="window.viewTenantDetails('${tenant.id}')" class="text-blue-700 hover:text-blue-900 hover:underline font-semibold flex items-center gap-1.5 group" title="ចុចមើលព័ត៌មានលម្អិតអ្នកជួល">
+                <i class="fa-solid fa-user text-[11px] text-blue-500 group-hover:text-blue-700"></i>
+                <span>${inv.tenantName || tenant.name}</span>
+              </button>
+            ` : (inv.tenantName || '-')}
+          </td>
           <td class="py-3.5 px-3 font-mono text-xs text-slate-500 whitespace-nowrap">${inv.month}</td>
           <td class="py-3.5 px-3 font-mono font-bold text-slate-900 whitespace-nowrap">
             <div class="text-emerald-700 text-sm sm:text-base">$${(inv.totalUsd || 0).toFixed(2)}</div>
@@ -78,10 +88,10 @@ export function renderInvoices() {
             </select>
           </td>
           <td class="py-3.5 px-3 text-right space-x-1.5 space-x-reverse whitespace-nowrap">
-            <button onclick="window.viewInvoiceModal('${inv.id}')" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition" title="មើល & ព្រីន">
-              <i class="fa-solid fa-print"></i> <span>មើល/ព្រីន</span>
+            <button onclick="window.viewInvoiceModal('${inv.id}')" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition border border-blue-200" title="មើល & ព្រីន">
+              <i class="fa-solid fa-print text-blue-600"></i> <span>មើល/ព្រីន</span>
             </button>
-            <button onclick="window.deleteInvoice('${inv.id}')" class="text-rose-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition" title="លុប">
+            <button onclick="window.deleteInvoice('${inv.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 transition" title="លុប">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
@@ -93,16 +103,17 @@ export function renderInvoices() {
   // 2. Render Mobile Cards View (Phones)
   if (mobileCards) {
     mobileCards.innerHTML = filteredInvoices.map(inv => {
+      const tenant = tenants.find(t => (inv.roomId && t.roomId === inv.roomId) || (inv.tenantName && t.name.trim().toLowerCase() === inv.tenantName.trim().toLowerCase()));
       let isPaid = inv.status === 'paid';
       let isPartial = inv.status === 'partial';
 
       return `
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-3">
           
           <!-- Top Row: Invoice Number + Room Badge -->
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs">
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs border border-blue-200">
                 <i class="fa-solid fa-receipt"></i>
               </div>
               <div>
@@ -111,7 +122,7 @@ export function renderInvoices() {
               </div>
             </div>
             
-            <span class="px-2.5 py-1 bg-slate-100 text-slate-800 rounded-xl text-xs font-bold font-mono border border-slate-200">
+            <span class="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-xl text-xs font-bold font-mono border border-blue-200">
               បន្ទប់ ${inv.roomNumber}
             </span>
           </div>
@@ -120,9 +131,15 @@ export function renderInvoices() {
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between">
             <div>
               <span class="text-[10px] text-slate-400 block">អ្នកជួល:</span>
-              <span class="font-bold text-slate-800 text-xs flex items-center gap-1">
-                <i class="fa-solid fa-user text-[10px] text-slate-400"></i> ${inv.tenantName || 'គ្មានឈ្មោះ'}
-              </span>
+              ${tenant ? `
+                <button onclick="window.viewTenantDetails('${tenant.id}')" class="font-semibold text-blue-700 hover:text-blue-900 text-xs flex items-center gap-1 mt-0.5">
+                  <i class="fa-solid fa-user text-[10px] text-blue-500"></i> ${inv.tenantName || tenant.name}
+                </button>
+              ` : `
+                <span class="font-semibold text-slate-800 text-xs flex items-center gap-1 mt-0.5">
+                  <i class="fa-solid fa-user text-[10px] text-slate-400"></i> ${inv.tenantName || 'គ្មានឈ្មោះ'}
+                </span>
+              `}
             </div>
             <div class="text-right">
               <span class="text-[10px] text-slate-400 block">ទឹកប្រាក់សរុប:</span>
@@ -141,10 +158,10 @@ export function renderInvoices() {
               </select>
             </div>
 
-            <button onclick="window.viewInvoiceModal('${inv.id}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition active:scale-98">
+            <button onclick="window.viewInvoiceModal('${inv.id}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition active:scale-98">
               <i class="fa-solid fa-print"></i> <span>មើល/ព្រីន</span>
             </button>
-            <button onclick="window.deleteInvoice('${inv.id}')" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition" title="លុបវិក្កយបត្រ">
+            <button onclick="window.deleteInvoice('${inv.id}')" class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition" title="លុបវិក្កយបត្រ">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
