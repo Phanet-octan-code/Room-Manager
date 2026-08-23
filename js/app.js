@@ -32,11 +32,37 @@ import {
   viewInvoiceModal,
   closeInvoiceViewModal,
   printInvoice,
-  downloadInvoicePdf
+  downloadInvoicePdf,
+  formatKhmerFullDate,
+  formatKhmerShortDate,
+  updateKhmerPeriodPreview
 } from './invoices.js';
 import { renderPayments } from './payments.js';
 import { renderReports, printReport } from './reports.js';
-import { renderUsers, openUserModal, closeUserModal, handleUserFormSubmit, getUsers, saveUsers } from './users.js';
+import {
+  renderUsers,
+  openUserModal,
+  closeUserModal,
+  handleUserFormSubmit,
+  openChangePasswordModal,
+  closeChangePasswordModal,
+  handleChangePasswordSubmit,
+  getUsers,
+  saveUsers
+} from './users.js';
+import {
+  getCurrentUser,
+  setCurrentUser,
+  clearCurrentUser,
+  loginUser,
+  handleLogout,
+  updateAuthUI,
+  showLoginScreen,
+  hideLoginScreen,
+  checkAuthStatus,
+  togglePasswordVisibility,
+  quickDemoLogin
+} from './auth.js';
 import {
   loadSettingsForm,
   handleSaveGeneralSettings,
@@ -98,6 +124,15 @@ window.viewInvoiceModal = viewInvoiceModal;
 window.closeInvoiceViewModal = closeInvoiceViewModal;
 window.printInvoice = printInvoice;
 window.downloadInvoicePdf = downloadInvoicePdf;
+window.formatKhmerFullDate = formatKhmerFullDate;
+window.formatKhmerShortDate = formatKhmerShortDate;
+window.updateKhmerPeriodPreview = updateKhmerPeriodPreview;
+
+window.openUserModal = openUserModal;
+window.closeUserModal = closeUserModal;
+window.openChangePasswordModal = openChangePasswordModal;
+window.closeChangePasswordModal = closeChangePasswordModal;
+window.deleteUser = deleteUser;
 window.markInvoicePaid = async (id) => {
   const ok = await showConfirm('តើអ្នកពិតជាបានទទួលប្រាក់រួចរាល់សម្រាប់វិក្កយបត្រនេះមែនទេ?', { title: 'បញ្ជាក់ការបង់ប្រាក់', okText: 'បានបង់រួច' });
   if (ok) {
@@ -289,6 +324,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('room-form')?.addEventListener('submit', handleRoomFormSubmit);
   document.getElementById('tenant-form')?.addEventListener('submit', handleTenantFormSubmit);
   document.getElementById('user-form')?.addEventListener('submit', handleUserFormSubmit);
+  document.getElementById('change-password-form')?.addEventListener('submit', handleChangePasswordSubmit);
   document.getElementById('create-invoice-form')?.addEventListener('submit', handleSaveInvoice);
   document.getElementById('general-settings-form')?.addEventListener('submit', handleSaveGeneralSettings);
   document.getElementById('supabase-settings-form')?.addEventListener('submit', handleSaveSupabaseConfig);
@@ -316,6 +352,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Invoice creation dynamic calculations
   document.getElementById('inv-create-room')?.addEventListener('change', calculateInvoiceForm);
   document.getElementById('inv-create-month')?.addEventListener('change', calculateInvoiceForm);
+  document.getElementById('inv-start-date')?.addEventListener('input', updateKhmerPeriodPreview);
+  document.getElementById('inv-payment-date')?.addEventListener('input', updateKhmerPeriodPreview);
   document.getElementById('inv-room-usd')?.addEventListener('input', handleRoomUsdChange);
   document.getElementById('inv-room-khr')?.addEventListener('input', handleRoomKhrChange);
 
@@ -327,6 +365,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   const supaResult = await initializeSupabase();
   updateSupabaseBadge(supaResult.connected);
 
-  // Initial tab setup
-  switchTab('dashboard');
+  // Login form handler
+  document.getElementById('login-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const identifier = document.getElementById('login-username')?.value;
+    const password = document.getElementById('login-password')?.value;
+    const remember = document.getElementById('login-remember')?.checked;
+
+    const result = loginUser(identifier, password, remember);
+    if (result.success) {
+      hideLoginScreen();
+      updateAuthUI(result.user);
+      switchTab('dashboard');
+      updateDashboardStats();
+      showToast(`សូមស្វាគមន៍! បានចូលប្រើប្រាស់ជា ${result.user.name} 🎉`, 'success');
+    } else {
+      showToast(result.message, 'error');
+      const passInput = document.getElementById('login-password');
+      if (passInput) {
+        passInput.classList.add('border-rose-500', 'bg-rose-50');
+        setTimeout(() => passInput.classList.remove('border-rose-500', 'bg-rose-50'), 2000);
+      }
+    }
+  });
+
+  // Check Authentication Status
+  const isAuthenticated = checkAuthStatus();
+  if (isAuthenticated) {
+    switchTab('dashboard');
+  }
 });

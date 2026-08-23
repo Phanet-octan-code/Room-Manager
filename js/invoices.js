@@ -2,6 +2,106 @@
 import { store } from './store.js';
 import { showToast } from './toast.js';
 
+// Khmer Date & Period Formatting Helpers
+export function formatKhmerFullDate(dateStr) {
+  if (!dateStr) return 'មិនទាន់កំណត់';
+  if (typeof dateStr === 'string' && dateStr.includes('ថ្ងៃទី')) return dateStr;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `ថ្ងៃទី ${day} ខែ ${month} ឆ្នាំ ${year}`;
+}
+
+export function formatKhmerShortDate(dateStr) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(-2);
+  return `${day}-${month} ឆ្នាំ ${year}`;
+}
+
+export function formatKhmerPeriodDuration(startDateStr, paymentDateStr) {
+  if (!startDateStr || !paymentDateStr) return 'រយៈពេល ១ ខែ';
+  const start = new Date(startDateStr);
+  const end = new Date(paymentDateStr);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'រយៈពេល ១ ខែ';
+
+  const startDay = String(start.getDate()).padStart(2, '0');
+  const startMonth = String(start.getMonth() + 1).padStart(2, '0');
+  const startYear = start.getFullYear();
+
+  const endDay = String(end.getDate()).padStart(2, '0');
+  const endMonth = String(end.getMonth() + 1).padStart(2, '0');
+  const endYear = end.getFullYear();
+
+  return `រយៈពេល ១ ខែ (ពី ថ្ងៃទី ${startDay} ខែ ${startMonth} ឆ្នាំ ${startYear} ដល់ ថ្ងៃទី ${endDay} ខែ ${endMonth} ឆ្នាំ ${endYear})`;
+}
+
+export function addOneMonthToDate(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return '';
+  let year = parseInt(parts[0], 10);
+  let month = parseInt(parts[1], 10); // 1-12
+  let day = parseInt(parts[2], 10);
+
+  month += 1;
+  if (month > 12) {
+    month = 1;
+    year += 1;
+  }
+
+  const daysInNextMonth = new Date(year, month, 0).getDate();
+  const targetDay = Math.min(day, daysInNextMonth);
+
+  const yyyy = String(year);
+  const mm = String(month).padStart(2, '0');
+  const dd = String(targetDay).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+window.addOneMonthToDate = addOneMonthToDate;
+
+export function handleStartDateChange() {
+  const startInput = document.getElementById('inv-start-date');
+  const paymentInput = document.getElementById('inv-payment-date');
+  if (startInput && startInput.value) {
+    const nextMonth = addOneMonthToDate(startInput.value);
+    if (paymentInput) {
+      paymentInput.value = nextMonth;
+    }
+  }
+  updateKhmerPeriodPreview();
+}
+window.handleStartDateChange = handleStartDateChange;
+
+export function updateKhmerPeriodPreview() {
+  const startInput = document.getElementById('inv-start-date');
+  const paymentInput = document.getElementById('inv-payment-date');
+  const previewEl = document.getElementById('inv-khmer-period-preview');
+  const subEl = document.getElementById('inv-khmer-period-sub');
+
+  if (!previewEl) return;
+  const startVal = startInput?.value;
+  let payVal = paymentInput?.value;
+
+  if (startVal) {
+    if (!payVal) {
+      payVal = addOneMonthToDate(startVal);
+      if (paymentInput) paymentInput.value = payVal;
+    }
+    previewEl.innerHTML = `<span class="font-bold">រយៈពេល ១ ខែ:</span> ពី ${formatKhmerFullDate(startVal)} ដល់ ${formatKhmerFullDate(payVal)}`;
+    if (subEl) subEl.innerText = `${startVal} → ${payVal}`;
+  } else {
+    previewEl.innerText = 'រយៈពេល ១ ខែ';
+    if (subEl) subEl.innerText = '';
+  }
+}
+window.updateKhmerPeriodPreview = updateKhmerPeriodPreview;
+
 export function renderInvoices() {
   const tableBody = document.getElementById('invoices-table-body');
   const mobileCards = document.getElementById('invoices-mobile-cards');
@@ -19,8 +119,8 @@ export function renderInvoices() {
     const matchMonth = !currentMonth || inv.month === currentMonth;
     const matchStatus = statusFilter === 'all' || inv.status === statusFilter;
     const matchSearch = inv.invoiceNumber.toLowerCase().includes(searchQuery) ||
-                        inv.roomNumber.toLowerCase().includes(searchQuery) ||
-                        (inv.tenantName && inv.tenantName.toLowerCase().includes(searchQuery));
+      inv.roomNumber.toLowerCase().includes(searchQuery) ||
+      (inv.tenantName && inv.tenantName.toLowerCase().includes(searchQuery));
     return matchMonth && matchStatus && matchSearch;
   });
 
@@ -36,7 +136,7 @@ export function renderInvoices() {
       </div>
     `;
     if (tableBody) {
-      tableBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">${emptyHtml}</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">មិនមានទិន្នន័យវិក្កយបត្រ</td></tr>`;
     }
     if (mobileCards) {
       mobileCards.innerHTML = emptyHtml;
@@ -44,19 +144,22 @@ export function renderInvoices() {
     return;
   }
 
-  // 1. Render Desktop Table Body
+  // 1. Render Table View (Desktops/Tablets)
   if (tableBody) {
     tableBody.innerHTML = filteredInvoices.map(inv => {
       const tenant = tenants.find(t => (inv.roomId && t.roomId === inv.roomId) || (inv.tenantName && t.name.trim().toLowerCase() === inv.tenantName.trim().toLowerCase()));
 
       let statusBadge = '';
       if (inv.status === 'paid') {
-        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5"><i class="fa-solid fa-check text-[10px]"></i> បានបង់រួច</span>`;
+        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-[10px]"></i> បានបង់រួច</span>`;
       } else if (inv.status === 'partial') {
-        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1.5"><i class="fa-solid fa-clock text-[10px]"></i> បង់មួយផ្នែក</span>`;
+        statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1.5"><i class="fa-solid fa-circle-half-stroke text-[10px]"></i> បង់ខ្លះ</span>`;
       } else {
         statusBadge = `<span class="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1.5"><i class="fa-solid fa-circle-exclamation text-[10px]"></i> មិនទាន់បង់</span>`;
       }
+
+      const loginDateStr = inv.startDate || (tenant ? tenant.startDate : null);
+      const payDateStr = inv.paymentDate || inv.createdAt;
 
       return `
         <tr class="border-b border-slate-100 hover:bg-blue-50/30 transition text-sm">
@@ -74,7 +177,13 @@ export function renderInvoices() {
               </button>
             ` : (inv.tenantName || '-')}
           </td>
-          <td class="py-3.5 px-3 font-mono text-xs text-slate-500 whitespace-nowrap">${inv.month}</td>
+          <td class="py-3.5 px-3 whitespace-nowrap">
+            <div class="font-mono text-xs font-bold text-slate-800">${inv.month}</div>
+            <div class="text-[10px] text-blue-600 font-sans font-medium flex items-center gap-1 mt-0.5" title="រយៈពេលគិតឈ្នួល">
+              <i class="fa-solid fa-calendar-days text-[9px]"></i>
+              <span>${loginDateStr && payDateStr ? `${new Date(loginDateStr).getDate()}/${new Date(loginDateStr).getMonth() + 1} - ${new Date(payDateStr).getDate()}/${new Date(payDateStr).getMonth() + 1} (១ ខែ)` : 'រយៈពេល ១ ខែ'}</span>
+            </div>
+          </td>
           <td class="py-3.5 px-3 font-mono font-bold text-slate-900 whitespace-nowrap">
             <div class="text-emerald-700 text-sm sm:text-base">$${(inv.totalUsd || 0).toFixed(2)}</div>
             <div class="text-[11px] text-slate-400 font-normal">≈ ${(inv.totalKhr || 0).toLocaleString()} ៛</div>
@@ -104,8 +213,8 @@ export function renderInvoices() {
   if (mobileCards) {
     mobileCards.innerHTML = filteredInvoices.map(inv => {
       const tenant = tenants.find(t => (inv.roomId && t.roomId === inv.roomId) || (inv.tenantName && t.name.trim().toLowerCase() === inv.tenantName.trim().toLowerCase()));
-      let isPaid = inv.status === 'paid';
-      let isPartial = inv.status === 'partial';
+      const loginDateStr = inv.startDate || (tenant ? tenant.startDate : null);
+      const payDateStr = inv.paymentDate || inv.createdAt;
 
       return `
         <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-3">
@@ -140,6 +249,9 @@ export function renderInvoices() {
                   <i class="fa-solid fa-user text-[10px] text-slate-400"></i> ${inv.tenantName || 'គ្មានឈ្មោះ'}
                 </span>
               `}
+              <div class="text-[10px] text-blue-600 font-sans font-medium mt-1">
+                ${loginDateStr && payDateStr ? `📅 គិត ១ ខែ: ${new Date(loginDateStr).getDate()}/${new Date(loginDateStr).getMonth() + 1} → ${new Date(payDateStr).getDate()}/${new Date(payDateStr).getMonth() + 1}` : '📅 រយៈពេល ១ ខែ'}
+              </div>
             </div>
             <div class="text-right">
               <span class="text-[10px] text-slate-400 block">ទឹកប្រាក់សរុប:</span>
@@ -200,6 +312,18 @@ export function openCreateInvoiceModal(roomId = null) {
   });
   roomSelect.innerHTML = options;
 
+  // Set initial dates (+1 Month Auto Calculation)
+  const startDateInput = document.getElementById('inv-start-date');
+  const paymentDateInput = document.getElementById('inv-payment-date');
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (startDateInput) {
+    startDateInput.value = todayStr;
+  }
+  if (paymentDateInput && startDateInput) {
+    paymentDateInput.value = addOneMonthToDate(startDateInput.value);
+  }
+  updateKhmerPeriodPreview();
+
   if (roomId) {
     calculateInvoiceForm();
   }
@@ -218,12 +342,23 @@ export function calculateInvoiceForm() {
   if (!roomId || !month) return;
 
   const room = store.getRoomById(roomId);
-  const tenant = store.getTenants().find(t => t.id === room.tenantId);
+  const tenant = store.getTenants().find(t => t.id === (room ? room.tenantId : null));
   const settings = store.getSettings();
   const reading = store.getReading(month, roomId) || {};
 
   document.getElementById('inv-tenant-name').value = tenant ? tenant.name : '';
   document.getElementById('inv-tenant-phone').value = tenant ? tenant.phone : '';
+
+  // Dates: Day Login (Start Date) and Day Payment (+1 Month Auto Calculate)
+  const startDateInput = document.getElementById('inv-start-date');
+  const paymentDateInput = document.getElementById('inv-payment-date');
+  if (startDateInput) {
+    startDateInput.value = tenant?.startDate || `${month}-01`;
+  }
+  if (paymentDateInput && startDateInput) {
+    paymentDateInput.value = addOneMonthToDate(startDateInput.value);
+  }
+  updateKhmerPeriodPreview();
 
   // House Fee (Room Rent in USD)
   const roomPriceUsd = room ? room.price : 70;
@@ -332,6 +467,7 @@ export function handleSaveInvoice(e) {
   const roomId = document.getElementById('inv-create-room').value;
   const month = document.getElementById('inv-create-month').value;
   const room = store.getRoomById(roomId);
+  const tenant = store.getTenants().find(t => t.id === (room ? room.tenantId : null));
   const settings = store.getSettings();
 
   if (!roomId || !month) {
@@ -341,6 +477,9 @@ export function handleSaveInvoice(e) {
 
   const cleanMonth = month.replace('-', '');
   const invoiceNumber = `INV-${cleanMonth}-${room ? room.roomNumber : '00'}`;
+
+  const startDate = document.getElementById('inv-start-date')?.value || (tenant?.startDate || `${month}-01`);
+  const paymentDate = document.getElementById('inv-payment-date')?.value || new Date().toISOString().split('T')[0];
 
   const oldElec = parseFloat(document.getElementById('inv-elec-old').value) || 0;
   const newElec = parseFloat(document.getElementById('inv-elec-new').value) || 0;
@@ -373,6 +512,8 @@ export function handleSaveInvoice(e) {
     roomNumber: room ? room.roomNumber : '',
     tenantName: document.getElementById('inv-tenant-name').value,
     tenantPhone: document.getElementById('inv-tenant-phone').value,
+    startDate,
+    paymentDate,
     roomPriceUsd,
     roomPriceKhr,
     oldElectric: oldElec,
@@ -417,6 +558,11 @@ export function viewInvoiceModal(invoiceId) {
   }
 
   const settings = store.getSettings();
+  const room = inv.roomId ? store.getRoomById(inv.roomId) : null;
+  const tenant = store.getTenants().find(t => (room && t.id === room.tenantId) || (inv.tenantName && t.name && t.name.trim().toLowerCase() === inv.tenantName.trim().toLowerCase()));
+
+  const loginDate = inv.startDate || (tenant ? tenant.startDate : null) || `${inv.month}-01`;
+  const paymentDate = inv.paymentDate || inv.createdAt || new Date().toISOString();
   const createdDate = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
 
   container.innerHTML = `
@@ -429,22 +575,46 @@ export function viewInvoiceModal(invoiceId) {
       </div>
 
       <!-- Header Info -->
-      <div class="text-xs space-y-1.5 pb-4 mb-4 border-b border-dashed border-slate-300">
+      <div class="text-xs space-y-2 pb-4 mb-4 border-b border-dashed border-slate-300">
         <div class="flex justify-between items-center">
           <span class="text-slate-500 font-bold">បន្ទប់:</span>
           <span class="font-extrabold text-blue-900 text-base">បន្ទប់ ${inv.roomNumber}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-slate-500">ឈ្មោះអ្នកជួល:</span>
-          <span class="font-bold text-slate-900">${inv.tenantName || 'គ្មានឈ្មោះ'}</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-slate-500">កាលបរិច្ឆេទ:</span>
-          <span class="text-slate-700 font-mono">${createdDate}</span>
+          <span class="font-bold text-slate-900">${inv.tenantName || (tenant ? tenant.name : 'គ្មានឈ្មោះ')}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-slate-500">លេខវិក្កយបត្រ:</span>
           <span class="text-slate-600 font-semibold font-mono">${inv.invoiceNumber}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-500">កាលបរិច្ឆេទចេញប័ណ្ណ:</span>
+          <span class="text-slate-700 font-mono">${createdDate}</span>
+        </div>
+
+        <!-- 1 Month Period & Khmer Dates (Day Login & Day Payment) -->
+        <div class="bg-blue-50/70 p-3 rounded-xl border border-blue-100/90 my-2.5 font-sans space-y-2">
+          <div class="flex justify-between items-center text-slate-800">
+            <span class="text-slate-500 font-medium flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-plus text-blue-600"></i> ថ្ងៃចូលនៅ (Day Login):
+            </span>
+            <span class="font-bold text-blue-950 font-sans tracking-wide">${formatKhmerFullDate(loginDate)}</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-800">
+            <span class="text-slate-500 font-medium flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-check text-emerald-600"></i> ថ្ងៃទូទាត់ (Day Payment):
+            </span>
+            <span class="font-bold text-emerald-800 font-sans tracking-wide">${formatKhmerFullDate(paymentDate)}</span>
+          </div>
+          <div class="pt-1.5 border-t border-blue-200/60 flex justify-between items-center text-xs">
+            <span class="text-blue-800 font-semibold flex items-center gap-1">
+              <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> រយៈពេលគិតឈ្នួល:
+            </span>
+            <span class="px-2.5 py-0.5 bg-blue-600 text-white rounded-lg text-[11px] font-bold font-sans">
+              រយៈពេល ១ ខែ (1 Month)
+            </span>
+          </div>
         </div>
       </div>
 

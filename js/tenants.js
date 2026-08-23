@@ -935,7 +935,7 @@ export function viewTenantDetails(tenantId) {
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-        <!-- Full Name -->
+        <!-- 1. Full Name -->
         <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
           <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
             <i class="fa-solid fa-user text-blue-600"></i> ឈ្មោះពេញ
@@ -943,7 +943,7 @@ export function viewTenantDetails(tenantId) {
           <span class="font-bold text-slate-800 text-xs sm:text-sm">${tenant.name}</span>
         </div>
 
-        <!-- Gender -->
+        <!-- 2. Gender -->
         <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
           <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
             <i class="fa-solid fa-venus-mars text-blue-600"></i> ភេទ
@@ -951,22 +951,22 @@ export function viewTenantDetails(tenantId) {
           <span class="font-bold text-slate-800 text-xs sm:text-sm">${tenant.gender === 'female' ? 'ស្រី (Female)' : 'ប្រុស (Male)'}</span>
         </div>
 
-        <!-- Phone Number (Green Theme) -->
+        <!-- 3. Phone Number (Green Theme) -->
         <div class="bg-emerald-50/50 p-2.5 sm:p-3 rounded-xl border border-emerald-100">
           <span class="text-slate-500 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
-            <i class="fa-solid fa-phone text-emerald-600"></i> លេខទូរស័ព្ទចម្បង
+            <i class="fa-solid fa-phone text-emerald-600"></i> លេខទូរស័ព្ទ
           </span>
           <div class="flex items-center justify-between gap-2">
             <a href="tel:${tenant.phone}" class="font-bold font-mono text-emerald-700 text-xs sm:text-sm hover:underline flex items-center gap-1.5">
               ${tenant.phone}
             </a>
-            <a href="https://t.me/+855${tenant.phone.replace(/^0/, '')}" target="_blank" class="px-2 py-0.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-sans font-semibold text-[10px] inline-flex items-center gap-1 border border-blue-200" title="ផ្ញើសារ Telegram">
+            <a href="https://t.me/+855${tenant.phone.replace(/^0/, '')}" target="_blank" class="px-2 py-0.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-sans font-semibold text-[10px] inline-flex items-center gap-1 border border-blue-200" title="ឆាតតាម Telegram">
               <i class="fa-brands fa-telegram text-xs text-blue-500"></i> Telegram
             </a>
           </div>
         </div>
 
-        <!-- Emergency Phone (Red Theme) -->
+        <!-- 4. Emergency Phone (Red Theme) -->
         <div class="bg-rose-50/50 p-2.5 sm:p-3 rounded-xl border border-rose-100">
           <span class="text-slate-500 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
             <i class="fa-solid fa-phone-volume text-rose-500"></i> លេខទូរស័ព្ទបន្ទាន់
@@ -976,99 +976,65 @@ export function viewTenantDetails(tenantId) {
               ${tenant.emergencyPhone}
             </a>
           ` : `
-            <span class="text-slate-400 italic text-xs">មិនមាន</span>
+            <span class="text-slate-400 italic text-xs">គ្មាន</span>
           `}
         </div>
 
-        <!-- National ID Card Section (Blue Theme) -->
-        <div class="bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-200/80 sm:col-span-2 space-y-3">
-          <div class="flex items-center justify-between flex-wrap gap-2">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-sm">
-                <i class="fa-solid fa-address-card"></i>
-              </div>
-              <div>
-                <span class="text-slate-800 text-xs font-bold block">លេខអត្តសញ្ញាណប័ណ្ណ (National ID)</span>
-                <span class="font-bold font-mono text-blue-900 text-sm">${tenant.idCard || '<span class="text-slate-400 font-normal font-sans text-xs">មិនទាន់បញ្ចូលលេខ</span>'}</span>
-              </div>
+        <!-- 5. National ID Card (Small & Compact 1 Column & 1 Row) -->
+        <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100 flex flex-col justify-between gap-2">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[10px] sm:text-[11px] flex items-center gap-1">
+                <i class="fa-solid fa-address-card text-blue-600"></i> លេខអត្តសញ្ញាណប័ណ្ណ
+              </span>
+              ${idCardPhoto ? `<span class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> មានរូប</span>` : ''}
             </div>
-
-            <div class="flex items-center gap-1.5">
-              ${idCardPhoto ? `
-                <button onclick="window.viewTenantPhoto('${idCardPhoto}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs inline-flex items-center gap-1.5 shadow-2xs transition active:scale-95">
-                  <i class="fa-solid fa-magnifying-glass-plus text-xs"></i> <span>ពង្រីករូបធំ</span>
-                </button>
-                <button onclick="window.quickUploadIdCard('${tenant.id}')" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-blue-50 text-blue-700 font-semibold text-xs inline-flex items-center gap-1 border border-blue-200 transition active:scale-95 shadow-2xs" title="ប្តូររូបថតកាត">
-                  <i class="fa-solid fa-camera text-blue-600 text-xs"></i> <span>ប្តូររូប</span>
-                </button>
-                <button onclick="window.removeIdCardPhotoForTenant('${tenant.id}')" class="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition active:scale-95" title="លុបរូបកាត">
-                  <i class="fa-solid fa-trash-can text-xs"></i>
-                </button>
-              ` : `
-                <button onclick="window.quickSnapIdCard('${tenant.id}')" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs inline-flex items-center gap-1 shadow-2xs transition active:scale-95">
-                  <i class="fa-solid fa-camera text-xs"></i> <span>ថតរូបកាត</span>
-                </button>
-                <button onclick="window.quickUploadIdCard('${tenant.id}')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 text-blue-700 font-semibold text-xs inline-flex items-center gap-1 border border-blue-200 shadow-2xs transition active:scale-95">
-                  <i class="fa-solid fa-image text-blue-600 text-xs"></i> <span>ជ្រើសរូប</span>
-                </button>
-              `}
+            <div class="font-bold font-mono text-slate-800 text-xs sm:text-sm mt-0.5">
+              ${tenant.idCard || '<span class="text-slate-400 font-normal font-sans text-xs">មិនទាន់បញ្ចូលលេខ</span>'}
             </div>
           </div>
 
-          <!-- Prominent ID Card Image Container -->
+          <!-- Compact 1 Row with Photo Thumbnail & Actions -->
           ${idCardPhoto ? `
-            <div class="relative bg-slate-900 rounded-2xl overflow-hidden border-2 border-blue-200 shadow-sm group">
-              <!-- Top Ribbon (Blue) -->
-              <div class="bg-blue-900 text-white px-3.5 py-2 flex items-center justify-between text-xs font-semibold border-b border-blue-800">
-                <span class="flex items-center gap-2">
-                  <i class="fa-solid fa-id-badge text-blue-300"></i>
-                  <span>រូបថតអត្តសញ្ញាណប័ណ្ណ — ${tenant.name}</span>
-                </span>
-                <span class="font-mono text-blue-200 bg-blue-950 px-2.5 py-0.5 rounded border border-blue-700 text-xs">${tenant.idCard || ''}</span>
+            <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-200/70">
+              <div onclick="window.viewTenantPhoto('${idCardPhoto}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" class="relative group cursor-pointer flex-shrink-0" title="ចុចមើលរូបពេញ">
+                <img src="${idCardPhoto}" alt="ID Card" class="w-14 h-9 sm:w-16 sm:h-10 rounded-lg object-cover border border-blue-200 shadow-2xs group-hover:scale-105 transition">
+                <div class="absolute inset-0 bg-black/25 group-hover:bg-black/40 rounded-lg flex items-center justify-center transition opacity-0 group-hover:opacity-100">
+                  <i class="fa-solid fa-magnifying-glass text-white text-[10px]"></i>
+                </div>
               </div>
-
-              <!-- Image display box -->
-              <div onclick="window.viewTenantPhoto('${idCardPhoto}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" class="p-3.5 flex items-center justify-center bg-slate-950 cursor-pointer group-hover:bg-slate-900/90 transition" title="ចុចលើរូបដើម្បីមើលរូបភាពពេញអេក្រង់">
-                <img src="${idCardPhoto}" alt="National ID Card - ${tenant.name}" class="max-h-72 w-auto max-w-full object-contain rounded-xl shadow-md group-hover:scale-[1.01] transition duration-300 border border-slate-800">
-              </div>
-
-              <!-- Bottom Bar -->
-              <div class="bg-slate-900 text-slate-300 px-3.5 py-2 flex items-center justify-between text-xs border-t border-slate-800">
-                <span class="text-[11px] text-slate-400 flex items-center gap-1.5">
-                  <i class="fa-solid fa-hand-pointer text-blue-400"></i> ចុចលើរូបដើម្បីពង្រីកពេញអេក្រង់
-                </span>
-                <button onclick="window.viewTenantPhoto('${idCardPhoto}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" class="text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1.5 text-xs">
-                  <i class="fa-solid fa-up-right-and-down-left-from-center text-[10px]"></i> <span>មើលរូបពេញ</span>
+              <div class="flex items-center gap-1 flex-wrap justify-end">
+                <button type="button" onclick="window.viewTenantPhoto('${idCardPhoto}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" class="px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold flex items-center gap-1 border border-blue-200 transition" title="មើលរូបធំ">
+                  <i class="fa-solid fa-eye text-[10px]"></i> <span>មើល</span>
+                </button>
+                <button type="button" onclick="window.quickUploadIdCard('${tenant.id}')" class="px-1.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200 transition" title="ប្តូររូប">
+                  <i class="fa-solid fa-camera text-slate-500 text-[10px]"></i>
+                </button>
+                <button type="button" onclick="window.removeIdCardPhotoForTenant('${tenant.id}')" class="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition" title="លុបរូប">
+                  <i class="fa-solid fa-trash-can text-[10px]"></i>
                 </button>
               </div>
             </div>
           ` : `
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border-2 border-dashed border-blue-200 text-center space-y-2.5">
-              <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl mx-auto border border-blue-100">
-                <i class="fa-solid fa-id-card"></i>
-              </div>
-              <div>
-                <span class="font-bold text-slate-800 text-xs sm:text-sm block">មិនទាន់មានរូបថតអត្តសញ្ញាណប័ណ្ណ</span>
-                <span class="text-[11px] text-slate-400 block mt-0.5">លោកអ្នកអាចថតរូបកាតផ្ទាល់ ឬជ្រើសរូបភាពពីទូរស័ព្ទ / កុំព្យូទ័រ</span>
-              </div>
-              <div class="flex items-center justify-center gap-2 pt-1">
-                <button onclick="window.quickSnapIdCard('${tenant.id}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition active:scale-95">
-                  <i class="fa-solid fa-camera text-xs"></i> <span>ថតរូបកាតឥឡូវនេះ</span>
-                </button>
-                <button onclick="window.quickUploadIdCard('${tenant.id}')" class="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 border border-blue-200 transition active:scale-95">
-                  <i class="fa-solid fa-image text-blue-600 text-xs"></i> <span>ជ្រើសរើសរូបពីម៉ាស៊ីន</span>
-                </button>
-              </div>
+            <div class="flex items-center gap-1.5 pt-1.5 border-t border-slate-200/70">
+              <button type="button" onclick="window.quickSnapIdCard('${tenant.id}')" class="flex-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold inline-flex items-center justify-center gap-1 shadow-2xs transition">
+                <i class="fa-solid fa-camera text-[10px]"></i> <span>ថតកាត</span>
+              </button>
+              <button type="button" onclick="window.quickUploadIdCard('${tenant.id}')" class="flex-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[11px] font-semibold inline-flex items-center justify-center gap-1 border border-blue-200 transition">
+                <i class="fa-solid fa-image text-[10px]"></i> <span>ជ្រើសរូប</span>
+              </button>
             </div>
           `}
         </div>
 
-        <!-- Hometown / Origin Address -->
-        <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100 sm:col-span-2">
-          <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
-            <i class="fa-solid fa-location-dot text-blue-600"></i> អាសយដ្ឋានដើម / ស្រុកកំណើត
-          </span>
-          <span class="font-medium text-slate-800 text-xs sm:text-sm">${tenant.address || '<span class="text-slate-400 italic">មិនបានបញ្ជាក់</span>'}</span>
+        <!-- 6. Hometown / Origin Address (1 Column) -->
+        <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100 flex flex-col justify-between">
+          <div>
+            <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
+              <i class="fa-solid fa-location-dot text-blue-600"></i> អាសយដ្ឋានដើម / ស្រុកកំណើត
+            </span>
+            <span class="font-medium text-slate-800 text-xs sm:text-sm line-clamp-2">${tenant.address || '<span class="text-slate-400 italic">មិនបានបញ្ជាក់</span>'}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1215,7 +1181,12 @@ export function viewTenantDetails(tenantId) {
               return `
                 <tr class="hover:bg-slate-50 transition">
                   <td class="py-2.5 px-3 font-mono font-bold text-blue-900">${inv.invoiceNumber}</td>
-                  <td class="py-2.5 px-3 font-mono text-slate-600">${inv.month}</td>
+                  <td class="py-2.5 px-3 whitespace-nowrap">
+                    <div class="font-mono font-bold text-slate-700">${inv.month}</div>
+                    <div class="text-[10px] text-blue-600 font-sans">
+                      ${inv.startDate && (inv.paymentDate || inv.createdAt) ? `${new Date(inv.startDate).getDate()}/${new Date(inv.startDate).getMonth()+1} → ${new Date(inv.paymentDate || inv.createdAt).getDate()}/${new Date(inv.paymentDate || inv.createdAt).getMonth()+1} (១ ខែ)` : 'រយៈពេល ១ ខែ'}
+                    </div>
+                  </td>
                   <td class="py-2.5 px-3 font-mono font-bold text-slate-900">
                     <span class="text-emerald-700">$${(inv.totalUsd || 0).toFixed(2)}</span>
                     <span class="text-[10px] text-slate-400 font-normal">(${(inv.totalKhr || 0).toLocaleString()} ៛)</span>

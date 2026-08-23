@@ -1,15 +1,24 @@
 // Users & Staff Management Module
 import { store } from './store.js';
-import { showToast } from './toast.js';
+import { showToast, showConfirm } from './toast.js';
 
 const SAMPLE_USERS = [
-  { id: 'usr-1', name: 'ម្ចាស់ផ្ទះ', email: 'admin@rental.com', role: 'admin', phone: '012 345 678', createdAt: '2026-01-01' },
-  { id: 'usr-2', name: 'អ្នកគ្រប់គ្រង', email: 'staff@rental.com', role: 'staff', phone: '098 765 432', createdAt: '2026-02-15' }
+  { id: 'usr-1', name: 'ម្ចាស់ផ្ទះ', email: 'phanet@gmail.com', username: 'admin', role: 'admin', phone: '012 345 678', password: 'Octan953149@!', createdAt: '2026-01-01' },
+  { id: 'usr-2', name: 'អ្នកគ្រប់គ្រង', email: 'staff@rental.com', username: 'staff', role: 'staff', phone: '098 765 432', password: 'staff123', createdAt: '2026-02-15' }
 ];
 
 export function getUsers() {
   const users = localStorage.getItem('rental_users');
-  return users ? JSON.parse(users) : SAMPLE_USERS;
+  if (!users) {
+    localStorage.setItem('rental_users', JSON.stringify(SAMPLE_USERS));
+    return SAMPLE_USERS;
+  }
+  try {
+    const parsed = JSON.parse(users);
+    return parsed.length > 0 ? parsed : SAMPLE_USERS;
+  } catch (e) {
+    return SAMPLE_USERS;
+  }
 }
 
 export function saveUsers(users) {
@@ -61,7 +70,10 @@ export function renderUsers() {
             ${u.role === 'admin' ? 'ម្ចាស់ប្រព័ន្ធ' : 'បុគ្គលិក'}
           </span>
         </td>
-        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+        <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-1.5">
+          <button onclick="window.openChangePasswordModal('${u.id}')" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold border border-amber-200 transition inline-flex items-center gap-1" title="ប្តូរពាក្យសម្ងាត់">
+            <i class="fa-solid fa-key text-[10px]"></i> <span>ប្តូរលេខសម្ងាត់</span>
+          </button>
           <button onclick="window.deleteUser('${u.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 transition" title="លុប">
             <i class="fa-solid fa-trash-can"></i>
           </button>
@@ -102,9 +114,12 @@ export function renderUsers() {
           </div>
         ` : ''}
 
-        <div class="flex justify-end pt-2 border-t border-slate-100">
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button onclick="window.openChangePasswordModal('${u.id}')" class="px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-xl text-xs font-semibold flex items-center gap-1 transition border border-amber-200">
+            <i class="fa-solid fa-key text-xs"></i> <span>ប្តូរលេខសម្ងាត់</span>
+          </button>
           <button onclick="window.deleteUser('${u.id}')" class="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
-            <i class="fa-solid fa-trash-can text-xs"></i> <span>លុបគណនី</span>
+            <i class="fa-solid fa-trash-can text-xs"></i> <span>លុប</span>
           </button>
         </div>
       </div>
@@ -128,6 +143,7 @@ export function handleUserFormSubmit(e) {
   const email = document.getElementById('new-user-email').value.trim();
   const phone = document.getElementById('new-user-phone').value.trim();
   const role = document.getElementById('new-user-role').value;
+  const password = document.getElementById('new-user-password')?.value?.trim() || (role === 'admin' ? 'admin123' : 'staff123');
 
   if (!name || !email) {
     showToast('សូមបញ្ចូលឈ្មោះ និងអ៊ីមែល!', 'warning');
@@ -135,12 +151,15 @@ export function handleUserFormSubmit(e) {
   }
 
   const users = getUsers();
+  const username = email.split('@')[0] || name.toLowerCase().replace(/\s+/g, '');
   const newUser = {
     id: 'usr-' + Date.now(),
     name,
     email,
+    username,
     phone,
     role,
+    password,
     createdAt: new Date().toISOString().split('T')[0]
   };
   users.push(newUser);
@@ -151,3 +170,107 @@ export function handleUserFormSubmit(e) {
   renderUsers();
   showToast('បានបន្ថែមគណនីថ្មីជោគជ័យ!', 'success');
 }
+
+export function openChangePasswordModal(userId) {
+  const modal = document.getElementById('change-password-modal');
+  const users = getUsers();
+  const user = users.find(u => u.id === userId);
+  if (!modal || !user) return;
+
+  const idInput = document.getElementById('change-pass-user-id');
+  const nameEl = document.getElementById('change-pass-user-name');
+  const emailEl = document.getElementById('change-pass-user-email');
+  const newPassInput = document.getElementById('change-pass-new-password');
+  const confirmPassInput = document.getElementById('change-pass-confirm-password');
+
+  if (idInput) idInput.value = user.id;
+  if (nameEl) nameEl.innerText = user.name;
+  if (emailEl) emailEl.innerText = `${user.email} (${user.role === 'admin' ? 'ម្ចាស់ប្រព័ន្ធ' : 'បុគ្គលិក'})`;
+  if (newPassInput) newPassInput.value = '';
+  if (confirmPassInput) confirmPassInput.value = '';
+
+  modal.classList.remove('hidden');
+}
+
+export function closeChangePasswordModal() {
+  const modal = document.getElementById('change-password-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+export function handleChangePasswordSubmit(e) {
+  e.preventDefault();
+  const userId = document.getElementById('change-pass-user-id')?.value;
+  const newPass = document.getElementById('change-pass-new-password')?.value?.trim();
+  const confirmPass = document.getElementById('change-pass-confirm-password')?.value?.trim();
+
+  if (!newPass) {
+    showToast('សូមបញ្ចូលពាក្យសម្ងាត់ថ្មី!', 'warning');
+    return;
+  }
+  if (newPass !== confirmPass) {
+    showToast('ការបញ្ជាក់ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ!', 'error');
+    return;
+  }
+
+  const users = getUsers();
+  const userIdx = users.findIndex(u => u.id === userId);
+  if (userIdx === -1) {
+    showToast('រកមិនឃើញគណនីនេះទេ!', 'error');
+    return;
+  }
+
+  users[userIdx].password = newPass;
+  saveUsers(users);
+  store.writeDocToSupabase('users', users[userIdx].id, users[userIdx]);
+  
+  // If current logged-in user password changed, update session
+  const currentSession = sessionStorage.getItem('rental_current_user') || localStorage.getItem('rental_current_user');
+  if (currentSession) {
+    try {
+      const current = JSON.parse(currentSession);
+      if (current.id === userId) {
+        current.password = newPass;
+        sessionStorage.setItem('rental_current_user', JSON.stringify(current));
+        if (localStorage.getItem('rental_current_user')) {
+          localStorage.setItem('rental_current_user', JSON.stringify(current));
+        }
+      }
+    } catch(e) {}
+  }
+
+  closeChangePasswordModal();
+  renderUsers();
+  showToast(`បានប្តូរពាក្យសម្ងាត់សម្រាប់ ${users[userIdx].name} ជោគជ័យ ✓`, 'success');
+}
+
+export async function deleteUser(id) {
+  const users = getUsers();
+  const user = users.find(u => u.id === id);
+  if (!user) return;
+
+  if (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1) {
+    showToast('មិនអាចលុប Admin ចុងក្រោយបានទេ!', 'warning');
+    return;
+  }
+
+  const ok = await showConfirm(`តើអ្នកពិតជាចង់លុបគណនី ${user.name} (${user.email}) មែនទេ?`, {
+    title: 'លុបគណនី',
+    danger: true,
+    okText: 'លុប'
+  });
+
+  if (ok) {
+    const updatedUsers = users.filter(u => u.id !== id);
+    saveUsers(updatedUsers);
+    store.deleteDocFromSupabase('users', id);
+    renderUsers();
+    showToast('បានលុបគណនីរួចរាល់', 'success');
+  }
+}
+
+// Global window bindings
+window.openUserModal = openUserModal;
+window.closeUserModal = closeUserModal;
+window.openChangePasswordModal = openChangePasswordModal;
+window.closeChangePasswordModal = closeChangePasswordModal;
+window.deleteUser = deleteUser;

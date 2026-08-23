@@ -301,6 +301,7 @@ class Store {
     if (tenant && tenant.roomId) {
       this.updateRoom(tenant.roomId, { status: 'available', tenantId: null });
     }
+    
     let tenants = this.getTenants();
     tenants = tenants.filter(t => t.id !== id);
     this.saveTenants(tenants);
