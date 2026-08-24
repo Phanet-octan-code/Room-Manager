@@ -163,13 +163,13 @@ export function updateSupabaseBadge(connected) {
   const navBadge = document.getElementById('nav-supabase-status');
   if (badge) {
     badge.innerHTML = connected
-      ? `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 shadow-xs"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> <i class="fa-solid fa-database text-[10px]"></i> <span>ភ្ជាប់ Cloud ជោគជ័យ</span></span>`
-      : `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5 shadow-xs"><span class="w-2 h-2 rounded-full bg-amber-500"></span> <i class="fa-solid fa-hard-drive text-[10px]"></i> <span>ដំណើរការ Local</span></span>`;
+      ? `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 flex items-center gap-1.5 shadow-2xs backdrop-blur-xs"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> <i class="fa-solid fa-cloud text-[10px]"></i> <span class="hidden sm:inline">Cloud Synced</span></span>`
+      : `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-white/15 text-white/90 border border-white/20 flex items-center gap-1.5 shadow-2xs backdrop-blur-xs"><span class="w-2 h-2 rounded-full bg-amber-300"></span> <i class="fa-solid fa-hard-drive text-[10px]"></i> <span class="hidden sm:inline">Local Mode</span></span>`;
   }
   if (navBadge) {
     navBadge.innerHTML = connected
-      ? `<span class="w-2 h-2 rounded-full bg-emerald-500" title="ភ្ជាប់ Cloud ជោគជ័យ"></span>`
-      : `<span class="w-2 h-2 rounded-full bg-amber-500" title="ដំណើរការ Local"></span>`;
+      ? `<span class="w-2 h-2 rounded-full bg-emerald-400" title="ភ្ជាប់ Cloud ជោគជ័យ"></span>`
+      : `<span class="w-2 h-2 rounded-full bg-amber-400" title="ដំណើរការ Local"></span>`;
   }
 }
 

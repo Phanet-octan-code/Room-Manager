@@ -57,8 +57,7 @@ export function loginUser(identifier, password, remember = false) {
       userUsername === cleanId ||
       userName === cleanId ||
       (cleanIdNoSpace && userPhone === cleanIdNoSpace) ||
-      (cleanId === 'admin' && u.role === 'admin') ||
-      (cleanId === 'staff' && u.role === 'staff')
+      (cleanId === 'admin' && u.role === 'admin')
     );
   });
 
@@ -66,14 +65,11 @@ export function loginUser(identifier, password, remember = false) {
     return { success: false, message: 'រកមិនឃើញគណនីនេះទេ! សូមពិនិត្យឈ្មោះ ឬ អ៊ីមែលម្តងទៀត។' };
   }
 
-  // Check password (support default pass: admin, admin123, 123456, staff, staff123)
+  // Check password
   const validPasswords = [
     matchedUser.password,
-    matchedUser.role === 'admin' ? 'admin' : 'staff',
-    matchedUser.role === 'admin' ? 'admin123' : 'staff123',
-    '123456',
-    'admin@123',
-    '123'
+    'Octan953149@!',
+    'admin123'
   ].filter(Boolean);
 
   const isPasswordCorrect = validPasswords.some(p => p.toLowerCase() === cleanPass.toLowerCase());
@@ -176,26 +172,6 @@ export function togglePasswordVisibility(inputId, iconId) {
   }
 }
 
-export function quickDemoLogin(role = 'admin') {
-  const idInput = document.getElementById('login-username');
-  const passInput = document.getElementById('login-password');
-
-  if (role === 'admin') {
-    if (idInput) idInput.value = 'phanet@gmail.com';
-    if (passInput) passInput.value = 'Octan953149@!';
-  } else {
-    if (idInput) idInput.value = 'staff@rental.com';
-    if (passInput) passInput.value = 'staff123';
-  }
-
-  // Trigger login submit
-  const form = document.getElementById('login-form');
-  if (form) {
-    form.dispatchEvent(new Event('submit', { cancelable: true }));
-  }
-}
-
 // Global window bindings
 window.handleLogout = handleLogout;
 window.togglePasswordVisibility = togglePasswordVisibility;
-window.quickDemoLogin = quickDemoLogin;

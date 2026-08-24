@@ -60,8 +60,7 @@ import {
   showLoginScreen,
   hideLoginScreen,
   checkAuthStatus,
-  togglePasswordVisibility,
-  quickDemoLogin
+  togglePasswordVisibility
 } from './auth.js';
 import {
   loadSettingsForm,
@@ -133,6 +132,25 @@ window.closeUserModal = closeUserModal;
 window.openChangePasswordModal = openChangePasswordModal;
 window.closeChangePasswordModal = closeChangePasswordModal;
 window.deleteUser = deleteUser;
+
+export function handleGlobalSearch(query) {
+  const q = (query || '').trim();
+  const roomSearch = document.getElementById('room-search');
+  const tenantSearch = document.getElementById('tenant-search');
+  const invoiceSearch = document.getElementById('invoice-search');
+  const paymentSearch = document.getElementById('payment-search');
+
+  if (roomSearch) roomSearch.value = q;
+  if (tenantSearch) tenantSearch.value = q;
+  if (invoiceSearch) invoiceSearch.value = q;
+  if (paymentSearch) paymentSearch.value = q;
+
+  renderRooms();
+  renderTenants();
+  renderInvoices();
+  renderPayments();
+}
+window.handleGlobalSearch = handleGlobalSearch;
 window.markInvoicePaid = async (id) => {
   const ok = await showConfirm('តើអ្នកពិតជាបានទទួលប្រាក់រួចរាល់សម្រាប់វិក្កយបត្រនេះមែនទេ?', { title: 'បញ្ជាក់ការបង់ប្រាក់', okText: 'បានបង់រួច' });
   if (ok) {
@@ -203,6 +221,8 @@ export function switchTab(tabName) {
     if (section) {
       if (t === tabName) {
         section.classList.remove('hidden');
+        section.classList.remove('animate-fade-in');
+        void section.offsetWidth; // Force CSS reflow to re-trigger smooth page animation
         section.classList.add('animate-fade-in');
       } else {
         section.classList.add('hidden');

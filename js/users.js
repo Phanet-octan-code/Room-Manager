@@ -3,8 +3,7 @@ import { store } from './store.js';
 import { showToast, showConfirm } from './toast.js';
 
 const SAMPLE_USERS = [
-  { id: 'usr-1', name: 'ម្ចាស់ផ្ទះ', email: 'phanet@gmail.com', username: 'admin', role: 'admin', phone: '012 345 678', password: 'Octan953149@!', createdAt: '2026-01-01' },
-  { id: 'usr-2', name: 'អ្នកគ្រប់គ្រង', email: 'staff@rental.com', username: 'staff', role: 'staff', phone: '098 765 432', password: 'staff123', createdAt: '2026-02-15' }
+  { id: 'usr-1', name: 'ម្ចាស់ផ្ទះ', email: 'phanet@gmail.com', username: 'admin', role: 'admin', phone: '012 345 678', password: 'Octan953149@!', createdAt: '2026-01-01' }
 ];
 
 export function getUsers() {
@@ -14,8 +13,14 @@ export function getUsers() {
     return SAMPLE_USERS;
   }
   try {
-    const parsed = JSON.parse(users);
-    return parsed.length > 0 ? parsed : SAMPLE_USERS;
+    let parsed = JSON.parse(users);
+    // Remove old demo staff account if present
+    parsed = parsed.filter(u => u.id !== 'usr-2' && u.email !== 'staff@rental.com');
+    if (parsed.length === 0) {
+      parsed = SAMPLE_USERS;
+    }
+    localStorage.setItem('rental_users', JSON.stringify(parsed));
+    return parsed;
   } catch (e) {
     return SAMPLE_USERS;
   }

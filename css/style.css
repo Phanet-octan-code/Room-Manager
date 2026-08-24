@@ -149,23 +149,30 @@ button:active {
   transform: scale(0.98);
 }
 
-/* ── Sidebar Navigation Buttons ── */
+/* ── Sidebar Navigation Buttons (Exact Match to Reference ERP Screenshot) ── */
 .sidebar-nav-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   width: 100%;
-  padding: 10px 14px;
-  border-radius: 14px;
-  font-size: 14.5px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
   font-weight: 500;
-  color: #475569;
+  color: #334155;
   background-color: transparent;
   border: 1px solid transparent;
   transition: all var(--transition-fast);
   text-align: left;
   outline: none !important;
   user-select: none;
+  position: relative;
+}
+
+.sidebar-nav-btn:hover {
+  background-color: #f1f5f9;
+  color: #1d4ed8;
+  border-color: #e2e8f0;
 }
 
 .sidebar-nav-btn:focus,
@@ -175,46 +182,65 @@ button:active {
   box-shadow: none !important;
 }
 
-.sidebar-nav-btn:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+.sidebar-nav-btn .nav-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .sidebar-nav-btn .nav-icon-wrap {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
+  font-size: 12px;
+  background-color: #ffffff;
+  border: 1.5px solid #60a5fa;
+  color: #2563eb;
   transition: all var(--transition-fast);
   flex-shrink: 0;
 }
 
 .sidebar-nav-btn:hover .nav-icon-wrap {
-  background-color: #ffffff;
-  color: #2563eb;
-  border-color: #cbd5e1;
+  background-color: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+  transform: scale(1.05);
 }
 
-/* Active State: Clean Soft Blue Pill with Crisp Blue text & Solid Blue Icon */
+.sidebar-nav-btn .nav-chevron {
+  font-size: 10px;
+  color: #94a3b8;
+  transition: transform var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.sidebar-nav-btn:hover .nav-chevron {
+  color: #2563eb;
+  transform: translateX(2px);
+}
+
+/* Active State: Vibrant Solid Blue Gradient Pill (Like "Dashboard" in reference image) */
 .sidebar-nav-btn.active {
-  background-color: #eff6ff !important;
-  color: #1d4ed8 !important;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
-  border-color: #bfdbfe !important;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08) !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
 }
 
 .sidebar-nav-btn.active .nav-icon-wrap {
-  background-color: #2563eb !important;
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
   color: #ffffff !important;
-  border-color: #2563eb !important;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3) !important;
+  box-shadow: none !important;
+}
+
+.sidebar-nav-btn.active .nav-chevron {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 /* ── Clear Card Surfaces ── */
@@ -307,26 +333,140 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* ── Animations ── */
+/* ── Universal Page & Component Animations ── */
+@keyframes pageSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+@keyframes modalBackdropFade {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(8px); }
+}
+
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(30px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
 @keyframes slideOutRight {
   from { opacity: 1; transform: translateX(0); }
   to { opacity: 0; transform: translateX(30px); }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.2s var(--transition-normal) forwards;
+.animate-fade-in,
+.page-transition {
+  animation: pageSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* ── Universal Modal Animations & Polish ── */
+.fixed.inset-0.z-50:not(.hidden) {
+  animation: modalBackdropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.fixed.inset-0.z-50:not(.hidden) > div {
+  animation: modalScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* ── Universal Card Surface Hover & Elevation ── */
+.clean-card,
+.bg-white.rounded-2xl.border,
+.bg-white.rounded-3xl.border {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.clean-card:hover,
+.bg-white.rounded-2xl.border:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.05), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+}
+
+/* ── Interactive Action Buttons Animation ── */
+button:not(:disabled) {
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.96) !important;
+}
+
+button i {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+button:hover i {
+  transform: scale(1.08);
+}
+
+button:hover i.fa-arrow-right,
+button:hover i.fa-chevron-right,
+button:hover i.fa-arrow-right-from-bracket {
+  transform: translateX(2.5px);
+}
+
+button:hover i.fa-rotate,
+button:hover i.fa-arrows-rotate {
+  transform: rotate(180deg);
+}
+
+button:hover i.fa-plus {
+  transform: rotate(90deg) scale(1.1);
+}
+
+/* ── Table Row Left Accent & Hover Animation ── */
+tbody tr {
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+tbody tr:hover {
+  background-color: #f8fafc !important;
+  box-shadow: inset 3.5px 0 0 #2563eb;
+}
+
+/* ── Form Inputs & Selects Focus Animation ── */
+input, select, textarea {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+input:hover, select:hover, textarea:hover {
+  border-color: #94a3b8;
+}
+
+input:focus, select:focus, textarea:focus {
+  transform: translateY(-0.5px);
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.14) !important;
 }
 
 /* ── Mobile Bottom Navigation Bar ── */
