@@ -393,29 +393,50 @@ export function retakeCameraPhoto() {
 }
 window.retakeCameraPhoto = retakeCameraPhoto;
 
-export function confirmCameraPhoto() {
+async function uploadImageToCloudinary(dataUrl, folder = 'tenants') {
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl, folder })
+    });
+    const result = await res.json();
+    if (result.success && result.url) {
+      return result.url;
+    }
+  } catch (err) {
+    console.warn('Cloudinary upload error, fallback to local data URI:', err);
+  }
+  return dataUrl;
+}
+window.uploadImageToCloudinary = uploadImageToCloudinary;
+
+export async function confirmCameraPhoto() {
   if (!currentCapturedPhotoData) return;
+  const snapData = currentCapturedPhotoData;
 
   if (window._pendingIdCardTenantId) {
     const targetId = window._pendingIdCardTenantId;
-    store.updateTenant(targetId, { idCardPhotoUrl: currentCapturedPhotoData });
-    showToast('បានថត និងរក្សាទុករូបថតអត្តសញ្ញាណប័ណ្ណជោគជ័យ ✓', 'success');
-    renderTenants();
-    viewTenantDetails(targetId);
     window._pendingIdCardTenantId = null;
     closeCameraModal();
+    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
+    const cloudUrl = await uploadImageToCloudinary(snapData, 'idcards');
+    store.updateTenant(targetId, { idCardPhotoUrl: cloudUrl });
+    showToast('បានរក្សាទុករូបថតអត្តសញ្ញាណប័ណ្ណលើ Cloudinary ជោគជ័យ ✓', 'success');
+    renderTenants();
+    viewTenantDetails(targetId);
     return;
   }
 
   if (currentCameraTarget === 'idcard') {
     const dataInput = document.getElementById('tenant-idcard-photo-data');
-    if (dataInput) dataInput.value = currentCapturedPhotoData;
+    if (dataInput) dataInput.value = snapData;
     const preview = document.getElementById('tenant-idcard-preview');
     const placeholder = document.getElementById('tenant-idcard-placeholder');
     const removeBtn = document.getElementById('tenant-idcard-remove-btn');
 
     if (preview) {
-      preview.src = currentCapturedPhotoData;
+      preview.src = snapData;
       preview.classList.remove('hidden');
     }
     if (placeholder) placeholder.classList.add('hidden');
@@ -423,16 +444,21 @@ export function confirmCameraPhoto() {
       removeBtn.classList.remove('hidden');
       removeBtn.classList.add('inline-flex');
     }
-    showToast('បានថតរូបអត្តសញ្ញាណប័ណ្ណជោគជ័យ ✓', 'success');
+    closeCameraModal();
+    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
+    uploadImageToCloudinary(snapData, 'idcards').then(cloudUrl => {
+      if (dataInput) dataInput.value = cloudUrl;
+      showToast('រូបអត្តសញ្ញាណប័ណ្ណត្រូវបានផ្ទុកឡើង Cloudinary រួចរាល់ ✓', 'success');
+    });
   } else {
     const dataInput = document.getElementById('tenant-photo-data');
-    if (dataInput) dataInput.value = currentCapturedPhotoData;
+    if (dataInput) dataInput.value = snapData;
     const preview = document.getElementById('tenant-photo-preview');
     const placeholder = document.getElementById('tenant-photo-placeholder');
     const removeBtn = document.getElementById('tenant-photo-remove-btn');
 
     if (preview) {
-      preview.src = currentCapturedPhotoData;
+      preview.src = snapData;
       preview.classList.remove('hidden');
     }
     if (placeholder) placeholder.classList.add('hidden');
@@ -440,10 +466,13 @@ export function confirmCameraPhoto() {
       removeBtn.classList.remove('hidden');
       removeBtn.classList.add('inline-flex');
     }
-    showToast('បានថតរូបអ្នកជួលជោគជ័យ ✓', 'success');
+    closeCameraModal();
+    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
+    uploadImageToCloudinary(snapData, 'tenants').then(cloudUrl => {
+      if (dataInput) dataInput.value = cloudUrl;
+      showToast('រូបថតអ្នកជួលត្រូវបានផ្ទុកឡើង Cloudinary រួចរាល់ ✓', 'success');
+    });
   }
-
-  closeCameraModal();
 }
 window.confirmCameraPhoto = confirmCameraPhoto;
 
@@ -569,14 +598,17 @@ export function openTenantModal(tenantId = null, preSelectRoomId = null) {
   populateTenantRoomSelect(selectedRoom);
   modal.classList.remove('hidden');
 }
+window.openTenantModal = openTenantModal;
 
 export function closeTenantModal() {
   const modal = document.getElementById('tenant-modal');
   if (modal) modal.classList.add('hidden');
 }
+window.closeTenantModal = closeTenantModal;
 
-export function handleTenantFormSubmit(e) {
+export async function handleTenantFormSubmit(e) {
   e.preventDefault();
+
   const id = document.getElementById('tenant-id').value;
   const photoUrl = document.getElementById('tenant-photo-data')?.value || '';
   const idCardPhotoUrl = document.getElementById('tenant-idcard-photo-data')?.value || '';
@@ -618,7 +650,7 @@ export function handleTenantPhotoUpload(e) {
   const file = e.target?.files?.[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (event) => {
+  reader.onload = async (event) => {
     const dataUrl = event.target.result;
     const dataInput = document.getElementById('tenant-photo-data');
     if (dataInput) dataInput.value = dataUrl;
@@ -634,6 +666,10 @@ export function handleTenantPhotoUpload(e) {
       removeBtn.classList.remove('hidden');
       removeBtn.classList.add('inline-flex');
     }
+    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
+    const cloudUrl = await uploadImageToCloudinary(dataUrl, 'tenants');
+    if (dataInput) dataInput.value = cloudUrl;
+    showToast('រូបថតអ្នកជួលត្រូវបានផ្ទុកឡើង Cloudinary រួចរាល់ ✓', 'success');
   };
   reader.readAsDataURL(file);
 }
@@ -642,7 +678,7 @@ export function handleTenantIdCardPhotoUpload(e) {
   const file = e.target?.files?.[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (event) => {
+  reader.onload = async (event) => {
     const dataUrl = event.target.result;
     const dataInput = document.getElementById('tenant-idcard-photo-data');
     if (dataInput) dataInput.value = dataUrl;
@@ -658,6 +694,10 @@ export function handleTenantIdCardPhotoUpload(e) {
       removeBtn.classList.remove('hidden');
       removeBtn.classList.add('inline-flex');
     }
+    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
+    const cloudUrl = await uploadImageToCloudinary(dataUrl, 'idcards');
+    if (dataInput) dataInput.value = cloudUrl;
+    showToast('រូបអត្តសញ្ញាណប័ណ្ណត្រូវបានផ្ទុកឡើង Cloudinary រួចរាល់ ✓', 'success');
   };
   reader.readAsDataURL(file);
 }

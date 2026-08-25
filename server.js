@@ -4,13 +4,22 @@ const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
 const cors = require('cors');
+const cloudinary = require('cloudinary').v2;
 
 const app = express();
 const PORT = process.env.PORT || 5173;
 
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'gehtqksm',
+  api_key: process.env.CLOUDINARY_API_KEY || '789519598658226',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'or7nJ7Z4CdIzHvbg8fWpJ52Gq_I',
+  secure: true
+});
+
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 // Database connection state
 let pool = null;
@@ -368,6 +377,47 @@ app.get('/api/pull/all', async (req, res) => {
   }
 });
 
+// ==================== CLOUDINARY UPLOAD API ====================
+
+app.post('/api/upload', async (req, res) => {
+  try {
+    const { image, folder = 'general', public_id } = req.body;
+    if (!image) {
+      return res.status(400).json({ success: false, error: 'No image data provided' });
+    }
+
+    // Upload to Cloudinary with automatic WebP conversion and quality optimization
+    const uploadOptions = {
+      folder: `rental_management/${folder}`,
+      resource_type: 'auto',
+      transformation: [
+        { quality: 'auto:good' },
+        { fetch_format: 'auto' }
+      ]
+    };
+
+    if (public_id) {
+      uploadOptions.public_id = public_id;
+      uploadOptions.overwrite = true;
+    }
+
+    const uploadResult = await cloudinary.uploader.upload(image, uploadOptions);
+
+    res.json({
+      success: true,
+      url: uploadResult.secure_url,
+      public_id: uploadResult.public_id,
+      format: uploadResult.format,
+      width: uploadResult.width,
+      height: uploadResult.height,
+      bytes: uploadResult.bytes
+    });
+  } catch (err) {
+    console.error('Cloudinary upload error:', err);
+    res.status(500).json({ success: false, error: err.message || 'Failed to upload image to Cloudinary' });
+  }
+});
+
 // ==================== STATIC FILES ====================
 
 // Serve static frontend files
@@ -378,12 +428,16 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`===================================================`);
-  console.log(`  Rental Room Management System with Supabase`);
-  console.log(`  Local URL: http://localhost:${PORT}`);
-  console.log(`  Supabase Host: ${process.env.DB_HOST || 'aws-0-ap-southeast-1.pooler.supabase.com'}`);
-  console.log(`  Database: ${process.env.DB_NAME || 'postgres'}`);
-  console.log(`  User: ${process.env.DB_USER || 'postgres.rsaxtgzmyzinvyuimthi'}`);
-  console.log(`===================================================`);
-});
+// Start listening if run directly (Local development)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`===================================================`);
+    console.log(`  Rental Room Management System`);
+    console.log(`  Local URL: http://localhost:${PORT}`);
+    console.log(`  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME || 'gehtqksm'}`);
+    console.log(`  Supabase Host: ${process.env.DB_HOST || 'aws-0-ap-southeast-1.pooler.supabase.com'}`);
+    console.log(`===================================================`);
+  });
+}
+
+module.exports = app;
