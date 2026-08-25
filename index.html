@@ -658,8 +658,13 @@
           </div>
         </div>
 
-        <!-- Table View for Rooms (Responsive Scroll on Mobile) -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <!-- Mobile Card View for Rooms (Phones) -->
+        <div id="rooms-mobile-cards" class="md:hidden space-y-3">
+          <!-- Rendered dynamically on mobile -->
+        </div>
+
+        <!-- Table View for Rooms (Desktop / Tablet) -->
+        <div class="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[850px]">
               <thead>
@@ -716,8 +721,13 @@
           </div>
         </div>
 
-        <!-- Table View for Tenants (Responsive Scroll on Mobile) -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <!-- Mobile Card View for Tenants (Phones) -->
+        <div id="tenants-mobile-cards" class="md:hidden space-y-3">
+          <!-- Rendered dynamically on mobile -->
+        </div>
+
+        <!-- Table View for Tenants (Desktop / Tablet) -->
+        <div class="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[850px]">
               <thead>

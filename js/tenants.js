@@ -393,36 +393,85 @@ export function retakeCameraPhoto() {
 }
 window.retakeCameraPhoto = retakeCameraPhoto;
 
+export function compressImage(fileOrDataUrl, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressedDataUrl);
+    };
+    img.onerror = () => resolve(typeof fileOrDataUrl === 'string' ? fileOrDataUrl : '');
+
+    if (typeof fileOrDataUrl === 'string') {
+      img.src = fileOrDataUrl;
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => { img.src = e.target.result; };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(fileOrDataUrl);
+    }
+  });
+}
+window.compressImage = compressImage;
+
 async function uploadImageToCloudinary(dataUrl, folder = 'tenants') {
   try {
+    const compressed = await compressImage(dataUrl, 1200, 1200, 0.82);
     const res = await fetch('/api/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: dataUrl, folder })
+      body: JSON.stringify({ image: compressed, folder })
     });
-    const result = await res.json();
-    if (result.success && result.url) {
-      return result.url;
+    if (res.ok) {
+      const result = await res.json();
+      if (result.success && result.url) {
+        return result.url;
+      }
     }
+    return compressed;
   } catch (err) {
-    console.warn('Cloudinary upload error, fallback to local data URI:', err);
+    console.warn('Cloudinary upload error, using compressed image:', err);
+    try {
+      return await compressImage(dataUrl, 1000, 1000, 0.75);
+    } catch {
+      return dataUrl;
+    }
   }
-  return dataUrl;
 }
 window.uploadImageToCloudinary = uploadImageToCloudinary;
 
 export async function confirmCameraPhoto() {
   if (!currentCapturedPhotoData) return;
-  const snapData = currentCapturedPhotoData;
+  const snapData = await compressImage(currentCapturedPhotoData, 1200, 1200, 0.82);
 
   if (window._pendingIdCardTenantId) {
     const targetId = window._pendingIdCardTenantId;
     window._pendingIdCardTenantId = null;
     closeCameraModal();
-    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
+    showToast('កំពុងផ្ទុកឡើងរូបថត...', 'info');
     const cloudUrl = await uploadImageToCloudinary(snapData, 'idcards');
     store.updateTenant(targetId, { idCardPhotoUrl: cloudUrl });
-    showToast('បានរក្សាទុករូបថតអត្តសញ្ញាណប័ណ្ណលើ Cloudinary ជោគជ័យ ✓', 'success');
+    showToast('បានរក្សាទុករូបថតអត្តសញ្ញាណប័ណ្ណជោគជ័យ ✓', 'success');
     renderTenants();
     viewTenantDetails(targetId);
     return;
@@ -445,10 +494,10 @@ export async function confirmCameraPhoto() {
       removeBtn.classList.add('inline-flex');
     }
     closeCameraModal();
-    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
+    showToast('កំពុងផ្ទុកឡើងរូបថត...', 'info');
     uploadImageToCloudinary(snapData, 'idcards').then(cloudUrl => {
       if (dataInput) dataInput.value = cloudUrl;
-      showToast('រូបអត្តសញ្ញាណប័ណ្ណត្រូវបានផ្ទុកឡើង Cloudinary រួចរាល់ ✓', 'success');
+      showToast('រូបអត្តសញ្ញាណប័ណ្ណត្រូវបានផ្ទុកឡើងរួចរាល់ ✓', 'success');
     });
   } else {
     const dataInput = document.getElementById('tenant-photo-data');
@@ -467,10 +516,10 @@ export async function confirmCameraPhoto() {
       removeBtn.classList.add('inline-flex');
     }
     closeCameraModal();
-    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
+    showToast('កំពុងផ្ទុកឡើងរូបថត...', 'info');
     uploadImageToCloudinary(snapData, 'tenants').then(cloudUrl => {
       if (dataInput) dataInput.value = cloudUrl;
-      showToast('រូបថតអ្នកជួលត្រូវបានផ្ទុកឡើង Cloudinary រួចរាល់ ✓', 'success');
+      showToast('រូបថតអ្នកជួលត្រូវបានផ្ទុកឡើងរួចរាល់ ✓', 'success');
     });
   }
 }
@@ -646,60 +695,62 @@ export async function handleTenantFormSubmit(e) {
   if (typeof window.updateDashboardStats === 'function') window.updateDashboardStats();
 }
 
-export function handleTenantPhotoUpload(e) {
+export async function handleTenantPhotoUpload(e) {
   const file = e.target?.files?.[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async (event) => {
-    const dataUrl = event.target.result;
-    const dataInput = document.getElementById('tenant-photo-data');
-    if (dataInput) dataInput.value = dataUrl;
-    const preview = document.getElementById('tenant-photo-preview');
-    const placeholder = document.getElementById('tenant-photo-placeholder');
-    const removeBtn = document.getElementById('tenant-photo-remove-btn');
-    if (preview) {
-      preview.src = dataUrl;
-      preview.classList.remove('hidden');
-    }
-    if (placeholder) placeholder.classList.add('hidden');
-    if (removeBtn) {
-      removeBtn.classList.remove('hidden');
-      removeBtn.classList.add('inline-flex');
-    }
-    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
-    const cloudUrl = await uploadImageToCloudinary(dataUrl, 'tenants');
-    if (dataInput) dataInput.value = cloudUrl;
-    showToast('រូបថតអ្នកជួលត្រូវបានផ្ទុកឡើង Cloudinary រួចរាល់ ✓', 'success');
-  };
-  reader.readAsDataURL(file);
+
+  showToast('កំពុងរៀបចំរូបភាព...', 'info');
+  const compressedDataUrl = await compressImage(file, 1200, 1200, 0.82);
+  if (!compressedDataUrl) return;
+
+  const dataInput = document.getElementById('tenant-photo-data');
+  if (dataInput) dataInput.value = compressedDataUrl;
+  const preview = document.getElementById('tenant-photo-preview');
+  const placeholder = document.getElementById('tenant-photo-placeholder');
+  const removeBtn = document.getElementById('tenant-photo-remove-btn');
+  if (preview) {
+    preview.src = compressedDataUrl;
+    preview.classList.remove('hidden');
+  }
+  if (placeholder) placeholder.classList.add('hidden');
+  if (removeBtn) {
+    removeBtn.classList.remove('hidden');
+    removeBtn.classList.add('inline-flex');
+  }
+
+  showToast('កំពុងផ្ទុកឡើងរូបថត...', 'info');
+  const cloudUrl = await uploadImageToCloudinary(compressedDataUrl, 'tenants');
+  if (dataInput) dataInput.value = cloudUrl;
+  showToast('រូបថតអ្នកជួលត្រូវបានផ្ទុកឡើងរួចរាល់ ✓', 'success');
 }
 
-export function handleTenantIdCardPhotoUpload(e) {
+export async function handleTenantIdCardPhotoUpload(e) {
   const file = e.target?.files?.[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async (event) => {
-    const dataUrl = event.target.result;
-    const dataInput = document.getElementById('tenant-idcard-photo-data');
-    if (dataInput) dataInput.value = dataUrl;
-    const preview = document.getElementById('tenant-idcard-preview');
-    const placeholder = document.getElementById('tenant-idcard-placeholder');
-    const removeBtn = document.getElementById('tenant-idcard-remove-btn');
-    if (preview) {
-      preview.src = dataUrl;
-      preview.classList.remove('hidden');
-    }
-    if (placeholder) placeholder.classList.add('hidden');
-    if (removeBtn) {
-      removeBtn.classList.remove('hidden');
-      removeBtn.classList.add('inline-flex');
-    }
-    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Cloudinary...', 'info');
-    const cloudUrl = await uploadImageToCloudinary(dataUrl, 'idcards');
-    if (dataInput) dataInput.value = cloudUrl;
-    showToast('រូបអត្តសញ្ញាណប័ណ្ណត្រូវបានផ្ទុកឡើង Cloudinary រួចរាល់ ✓', 'success');
-  };
-  reader.readAsDataURL(file);
+
+  showToast('កំពុងរៀបចំរូបភាព...', 'info');
+  const compressedDataUrl = await compressImage(file, 1200, 1200, 0.82);
+  if (!compressedDataUrl) return;
+
+  const dataInput = document.getElementById('tenant-idcard-photo-data');
+  if (dataInput) dataInput.value = compressedDataUrl;
+  const preview = document.getElementById('tenant-idcard-preview');
+  const placeholder = document.getElementById('tenant-idcard-placeholder');
+  const removeBtn = document.getElementById('tenant-idcard-remove-btn');
+  if (preview) {
+    preview.src = compressedDataUrl;
+    preview.classList.remove('hidden');
+  }
+  if (placeholder) placeholder.classList.add('hidden');
+  if (removeBtn) {
+    removeBtn.classList.remove('hidden');
+    removeBtn.classList.add('inline-flex');
+  }
+
+  showToast('កំពុងផ្ទុកឡើងរូបថត...', 'info');
+  const cloudUrl = await uploadImageToCloudinary(compressedDataUrl, 'idcards');
+  if (dataInput) dataInput.value = cloudUrl;
+  showToast('រូបអត្តសញ្ញាណប័ណ្ណត្រូវបានផ្ទុកឡើងរួចរាល់ ✓', 'success');
 }
 
 export function viewTenantPhoto(photoUrl, name = 'រូបថត') {
