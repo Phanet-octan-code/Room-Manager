@@ -3,7 +3,7 @@ import { store } from './store.js';
 import { showToast, showConfirm } from './toast.js';
 
 const SAMPLE_USERS = [
-  { id: 'usr-1', name: 'ម្ចាស់ផ្ទះ', email: 'phanet@gmail.com', username: 'admin', role: 'admin', phone: '012 345 678', password: 'Octan953149@!', createdAt: '2026-01-01' }
+  { id: 'usr-1', name: 'ម្ចាស់ផ្ទះ', email: 'phanet@gmail.com', username: 'admin', role: 'admin', phone: '012 345 678', password: 'Octan953149', createdAt: '2026-01-01' }
 ];
 
 export function getUsers() {
@@ -18,6 +18,11 @@ export function getUsers() {
     parsed = parsed.filter(u => u.id !== 'usr-2' && u.email !== 'staff@rental.com');
     if (parsed.length === 0) {
       parsed = SAMPLE_USERS;
+    } else {
+      const adminUser = parsed.find(u => u.role === 'admin' || u.id === 'usr-1');
+      if (adminUser && (!adminUser.password || adminUser.password === 'Octan953149@!' || adminUser.password === 'admin123')) {
+        adminUser.password = SAMPLE_USERS[0].password;
+      }
     }
     localStorage.setItem('rental_users', JSON.stringify(parsed));
     return parsed;
@@ -227,7 +232,7 @@ export function handleChangePasswordSubmit(e) {
   users[userIdx].password = newPass;
   saveUsers(users);
   store.writeDocToSupabase('users', users[userIdx].id, users[userIdx]);
-  
+
   // If current logged-in user password changed, update session
   const currentSession = sessionStorage.getItem('rental_current_user') || localStorage.getItem('rental_current_user');
   if (currentSession) {
@@ -240,7 +245,7 @@ export function handleChangePasswordSubmit(e) {
           localStorage.setItem('rental_current_user', JSON.stringify(current));
         }
       }
-    } catch(e) {}
+    } catch (e) { }
   }
 
   closeChangePasswordModal();

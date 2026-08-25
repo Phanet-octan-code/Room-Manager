@@ -9,16 +9,16 @@ export function renderTenants() {
 
   const tenants = store.getTenants();
   const rooms = store.getRooms();
-  
+
   const searchQuery = document.getElementById('tenant-search')?.value?.toLowerCase() || '';
   const statusFilter = document.getElementById('tenant-status-filter')?.value || 'all';
   const genderFilter = document.getElementById('tenant-gender-filter')?.value || 'all';
 
   const filteredTenants = tenants.filter(t => {
     const matchSearch = t.name.toLowerCase().includes(searchQuery) ||
-                        t.phone.includes(searchQuery) ||
-                        (t.idCard && t.idCard.includes(searchQuery)) ||
-                        (t.address && t.address.toLowerCase().includes(searchQuery));
+      t.phone.includes(searchQuery) ||
+      (t.idCard && t.idCard.includes(searchQuery)) ||
+      (t.address && t.address.toLowerCase().includes(searchQuery));
     const matchStatus = statusFilter === 'all' || (t.status || 'active') === statusFilter;
     const matchGender = genderFilter === 'all' || (t.gender || 'male') === genderFilter;
     return matchSearch && matchStatus && matchGender;
@@ -36,7 +36,7 @@ export function renderTenants() {
       </div>
     `;
     if (tableBody) {
-      tableBody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-slate-400">${emptyHtml}</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-slate-400">${emptyHtml}</td></tr>`;
     }
     if (mobileCards) {
       mobileCards.innerHTML = emptyHtml;
@@ -49,11 +49,11 @@ export function renderTenants() {
     tableBody.innerHTML = filteredTenants.map((tenant, index) => {
       const room = rooms.find(r => r.id === tenant.roomId);
       const cleanRoomNum = room ? ((room.roomNumber || '').replace(/^room[-_]?/i, '') || room.roomNumber) : '';
-      const roomBadge = room 
+      const roomBadge = room
         ? `<span class="whitespace-nowrap px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg font-semibold text-xs inline-flex items-center gap-1.5 border border-blue-200"><i class="fa-solid fa-door-closed text-[10px] text-blue-500"></i> បន្ទប់ ${cleanRoomNum}</span>`
         : `<span class="whitespace-nowrap px-2.5 py-1 bg-slate-50 text-slate-400 rounded-lg text-xs font-normal border border-slate-200/60 inline-block italic">គ្មានបន្ទប់</span>`;
 
-      const genderBadge = tenant.gender === 'female' 
+      const genderBadge = tenant.gender === 'female'
         ? `<span class="whitespace-nowrap px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-medium inline-flex items-center gap-1.5"><i class="fa-solid fa-venus text-[10px] text-blue-500"></i> ស្រី</span>`
         : `<span class="whitespace-nowrap px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-medium inline-flex items-center gap-1.5"><i class="fa-solid fa-mars text-[10px] text-blue-500"></i> ប្រុស</span>`;
 
@@ -63,20 +63,7 @@ export function renderTenants() {
 
       return `
         <tr onclick="window.viewTenantDetails('${tenant.id}')" class="border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer transition text-sm group" title="ចុចដើម្បីមើលព័ត៌មានលម្អិតអ្នកជួល">
-          <td class="py-3.5 px-3 text-slate-400 text-xs text-center whitespace-nowrap">${index + 1}</td>
-          
-          <!-- Photo / Avatar -->
-          <td class="py-3.5 px-3 text-center whitespace-nowrap">
-            ${tenant.photoUrl ? `
-              <img src="${tenant.photoUrl}" onclick="event.stopPropagation(); window.viewTenantPhoto('${tenant.photoUrl}', '${tenant.name}')" 
-                   class="w-10 h-10 rounded-full object-cover border border-slate-200 cursor-pointer hover:scale-105 transition shadow-2xs mx-auto" 
-                   title="ចុចដើម្បីមើលរូបភាពធំ">
-            ` : `
-              <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition flex items-center justify-center font-bold text-xs border border-blue-200 mx-auto">
-                ${tenant.name.charAt(0)}
-              </div>
-            `}
-          </td>
+          <td class="py-3.5 px-3.5 text-slate-400 text-xs text-center whitespace-nowrap">${index + 1}</td>
 
           <!-- Name & ID -->
           <td class="py-3.5 px-3 whitespace-nowrap">
@@ -100,16 +87,7 @@ export function renderTenants() {
 
           <!-- ID Card (Blue) -->
           <td class="py-3.5 px-3 text-slate-700 font-mono text-xs whitespace-nowrap">
-            <div class="flex items-center gap-1.5">
-              <span>${tenant.idCard || '-'}</span>
-              ${tenant.idCardPhotoUrl ? `
-                <button type="button" onclick="event.stopPropagation(); window.viewTenantPhoto('${tenant.idCardPhotoUrl}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" 
-                        class="w-6 h-6 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition border border-blue-200" 
-                        title="ចុចមើលរូបថតអត្តសញ្ញាណប័ណ្ណ">
-                  <i class="fa-solid fa-id-card text-[11px]"></i>
-                </button>
-              ` : ''}
-            </div>
+            <span>${tenant.idCard || '-'}</span>
           </td>
 
           <!-- Address -->
@@ -152,18 +130,11 @@ export function renderTenants() {
       return `
         <div onclick="window.viewTenantDetails('${tenant.id}')" class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-3 cursor-pointer hover:border-blue-300 transition">
           
-          <!-- Card Header: Avatar + Name + Status -->
+          <!-- Card Header: Name + Status -->
           <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="relative flex-shrink-0">
-                ${tenant.photoUrl ? `
-                  <img src="${tenant.photoUrl}" onclick="event.stopPropagation(); window.viewTenantPhoto('${tenant.photoUrl}', '${tenant.name}')" 
-                       class="w-11 h-11 rounded-full object-cover border border-slate-200 cursor-pointer shadow-2xs" title="ចុចមើលរូបធំ">
-                ` : `
-                  <div class="w-11 h-11 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200 shadow-2xs">
-                    ${tenant.name.charAt(0)}
-                  </div>
-                `}
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-200 flex-shrink-0">
+                <i class="fa-solid fa-user"></i>
               </div>
               <div class="min-w-0">
                 <div class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
@@ -198,18 +169,10 @@ export function renderTenants() {
 
           <!-- Other Details -->
           <div class="text-xs text-slate-600 space-y-1.5 pt-1">
-            ${(tenant.idCard || tenant.idCardPhotoUrl) ? `
+            ${tenant.idCard ? `
               <div class="flex justify-between items-center text-[11px]">
                 <span class="text-slate-400 flex items-center gap-1"><i class="fa-solid fa-address-card text-blue-600"></i> អត្តសញ្ញាណប័ណ្ណ:</span>
-                <div class="flex items-center gap-1.5">
-                  <span class="font-mono font-medium text-slate-700">${tenant.idCard || '-'}</span>
-                  ${tenant.idCardPhotoUrl ? `
-                    <button type="button" onclick="event.stopPropagation(); window.viewTenantPhoto('${tenant.idCardPhotoUrl}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" 
-                            class="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-sans font-semibold text-[10px] flex items-center gap-1 border border-blue-200">
-                      <i class="fa-solid fa-id-card text-[10px]"></i> មើលរូប
-                    </button>
-                  ` : ''}
-                </div>
+                <span class="font-mono font-medium text-slate-700">${tenant.idCard}</span>
               </div>
             ` : ''}
             ${tenant.address ? `
@@ -485,7 +448,8 @@ export function confirmCameraPhoto() {
 window.confirmCameraPhoto = confirmCameraPhoto;
 
 export function removeTenantPhoto() {
-  document.getElementById('tenant-photo-data').value = '';
+  const photoData = document.getElementById('tenant-photo-data');
+  if (photoData) photoData.value = '';
   const preview = document.getElementById('tenant-photo-preview');
   const placeholder = document.getElementById('tenant-photo-placeholder');
   const removeBtn = document.getElementById('tenant-photo-remove-btn');
@@ -506,7 +470,8 @@ export function removeTenantPhoto() {
 window.removeTenantPhoto = removeTenantPhoto;
 
 export function removeTenantIdCardPhoto() {
-  document.getElementById('tenant-idcard-photo-data').value = '';
+  const idCardData = document.getElementById('tenant-idcard-photo-data');
+  if (idCardData) idCardData.value = '';
   const preview = document.getElementById('tenant-idcard-preview');
   const placeholder = document.getElementById('tenant-idcard-placeholder');
   const removeBtn = document.getElementById('tenant-idcard-remove-btn');
@@ -530,34 +495,11 @@ export function openTenantModal(tenantId = null, preSelectRoomId = null) {
   const modal = document.getElementById('tenant-modal');
   const form = document.getElementById('tenant-form');
   const title = document.getElementById('tenant-modal-title');
-  const photoPreview = document.getElementById('tenant-photo-preview');
-  const photoPlaceholder = document.getElementById('tenant-photo-placeholder');
-  const removeBtn = document.getElementById('tenant-photo-remove-btn');
-
-  const idcardPreview = document.getElementById('tenant-idcard-preview');
-  const idcardPlaceholder = document.getElementById('tenant-idcard-placeholder');
-  const idcardRemoveBtn = document.getElementById('tenant-idcard-remove-btn');
 
   if (!modal || !form) return;
 
   form.reset();
   document.getElementById('tenant-id').value = '';
-  document.getElementById('tenant-photo-data').value = '';
-  document.getElementById('tenant-idcard-photo-data').value = '';
-
-  if (photoPreview) photoPreview.classList.add('hidden');
-  if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
-  if (removeBtn) {
-    removeBtn.classList.add('hidden');
-    removeBtn.classList.remove('inline-flex');
-  }
-
-  if (idcardPreview) idcardPreview.classList.add('hidden');
-  if (idcardPlaceholder) idcardPlaceholder.classList.remove('hidden');
-  if (idcardRemoveBtn) {
-    idcardRemoveBtn.classList.add('hidden');
-    idcardRemoveBtn.classList.remove('inline-flex');
-  }
 
   let selectedRoom = preSelectRoomId;
 
@@ -576,34 +518,43 @@ export function openTenantModal(tenantId = null, preSelectRoomId = null) {
       document.getElementById('tenant-emergency').value = tenant.emergencyPhone || '';
       selectedRoom = tenant.roomId;
 
+      const photoDataInput = document.getElementById('tenant-photo-data');
+      const photoPreview = document.getElementById('tenant-photo-preview');
+      const photoPlaceholder = document.getElementById('tenant-photo-placeholder');
+      const photoRemoveBtn = document.getElementById('tenant-photo-remove-btn');
       if (tenant.photoUrl) {
-        document.getElementById('tenant-photo-data').value = tenant.photoUrl;
+        if (photoDataInput) photoDataInput.value = tenant.photoUrl;
         if (photoPreview) {
           photoPreview.src = tenant.photoUrl;
           photoPreview.classList.remove('hidden');
         }
-        if (photoPlaceholder) {
-          photoPlaceholder.classList.add('hidden');
+        if (photoPlaceholder) photoPlaceholder.classList.add('hidden');
+        if (photoRemoveBtn) {
+          photoRemoveBtn.classList.remove('hidden');
+          photoRemoveBtn.classList.add('inline-flex');
         }
-        if (removeBtn) {
-          removeBtn.classList.remove('hidden');
-          removeBtn.classList.add('inline-flex');
-        }
+      } else {
+        removeTenantPhoto();
       }
 
-      if (tenant.idCardPhotoUrl) {
-        document.getElementById('tenant-idcard-photo-data').value = tenant.idCardPhotoUrl;
-        if (idcardPreview) {
-          idcardPreview.src = tenant.idCardPhotoUrl;
-          idcardPreview.classList.remove('hidden');
+      const idCardDataInput = document.getElementById('tenant-idcard-photo-data');
+      const idCardPreview = document.getElementById('tenant-idcard-preview');
+      const idCardPlaceholder = document.getElementById('tenant-idcard-placeholder');
+      const idCardRemoveBtn = document.getElementById('tenant-idcard-remove-btn');
+      const idCardUrl = tenant.idCardPhotoUrl || tenant.idCardPhoto || tenant.idCardImage;
+      if (idCardUrl) {
+        if (idCardDataInput) idCardDataInput.value = idCardUrl;
+        if (idCardPreview) {
+          idCardPreview.src = idCardUrl;
+          idCardPreview.classList.remove('hidden');
         }
-        if (idcardPlaceholder) {
-          idcardPlaceholder.classList.add('hidden');
+        if (idCardPlaceholder) idCardPlaceholder.classList.add('hidden');
+        if (idCardRemoveBtn) {
+          idCardRemoveBtn.classList.remove('hidden');
+          idCardRemoveBtn.classList.add('inline-flex');
         }
-        if (idcardRemoveBtn) {
-          idcardRemoveBtn.classList.remove('hidden');
-          idcardRemoveBtn.classList.add('inline-flex');
-        }
+      } else {
+        removeTenantIdCardPhoto();
       }
     }
   } else {
@@ -611,6 +562,8 @@ export function openTenantModal(tenantId = null, preSelectRoomId = null) {
     document.getElementById('tenant-gender').value = 'male';
     document.getElementById('tenant-status').value = 'active';
     document.getElementById('tenant-start-date').value = new Date().toISOString().split('T')[0];
+    removeTenantPhoto();
+    removeTenantIdCardPhoto();
   }
 
   populateTenantRoomSelect(selectedRoom);
@@ -622,73 +575,24 @@ export function closeTenantModal() {
   if (modal) modal.classList.add('hidden');
 }
 
-export function handleTenantPhotoUpload(e) {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    const base64 = evt.target.result;
-    document.getElementById('tenant-photo-data').value = base64;
-    const preview = document.getElementById('tenant-photo-preview');
-    const placeholder = document.getElementById('tenant-photo-placeholder');
-    const removeBtn = document.getElementById('tenant-photo-remove-btn');
-    if (preview) {
-      preview.src = base64;
-      preview.classList.remove('hidden');
-    }
-    if (placeholder) {
-      placeholder.classList.add('hidden');
-    }
-    if (removeBtn) {
-      removeBtn.classList.remove('hidden');
-      removeBtn.classList.add('inline-flex');
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-export function handleTenantIdCardPhotoUpload(e) {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    const base64 = evt.target.result;
-    document.getElementById('tenant-idcard-photo-data').value = base64;
-    const preview = document.getElementById('tenant-idcard-preview');
-    const placeholder = document.getElementById('tenant-idcard-placeholder');
-    const removeBtn = document.getElementById('tenant-idcard-remove-btn');
-    if (preview) {
-      preview.src = base64;
-      preview.classList.remove('hidden');
-    }
-    if (placeholder) {
-      placeholder.classList.add('hidden');
-    }
-    if (removeBtn) {
-      removeBtn.classList.remove('hidden');
-      removeBtn.classList.add('inline-flex');
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
 export function handleTenantFormSubmit(e) {
   e.preventDefault();
   const id = document.getElementById('tenant-id').value;
+  const photoUrl = document.getElementById('tenant-photo-data')?.value || '';
+  const idCardPhotoUrl = document.getElementById('tenant-idcard-photo-data')?.value || '';
+
   const tenantData = {
     name: document.getElementById('tenant-name').value.trim(),
     gender: document.getElementById('tenant-gender').value,
     phone: document.getElementById('tenant-phone').value.trim(),
     idCard: document.getElementById('tenant-idcard').value.trim(),
-    idCardPhotoUrl: document.getElementById('tenant-idcard-photo-data').value || '',
     address: document.getElementById('tenant-address').value.trim(),
     roomId: document.getElementById('tenant-room-id').value || null,
     startDate: document.getElementById('tenant-start-date').value,
     status: document.getElementById('tenant-status').value,
     emergencyPhone: document.getElementById('tenant-emergency').value.trim(),
-    photoUrl: document.getElementById('tenant-photo-data').value || ''
+    photoUrl,
+    idCardPhotoUrl
   };
 
   if (!tenantData.name || !tenantData.phone) {
@@ -706,24 +610,71 @@ export function handleTenantFormSubmit(e) {
 
   closeTenantModal();
   renderTenants();
-  window.renderRooms();
-  window.updateDashboardStats();
+  if (typeof window.renderRooms === 'function') window.renderRooms();
+  if (typeof window.updateDashboardStats === 'function') window.updateDashboardStats();
 }
 
-export function viewTenantPhoto(photoUrl, name) {
+export function handleTenantPhotoUpload(e) {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const dataUrl = event.target.result;
+    const dataInput = document.getElementById('tenant-photo-data');
+    if (dataInput) dataInput.value = dataUrl;
+    const preview = document.getElementById('tenant-photo-preview');
+    const placeholder = document.getElementById('tenant-photo-placeholder');
+    const removeBtn = document.getElementById('tenant-photo-remove-btn');
+    if (preview) {
+      preview.src = dataUrl;
+      preview.classList.remove('hidden');
+    }
+    if (placeholder) placeholder.classList.add('hidden');
+    if (removeBtn) {
+      removeBtn.classList.remove('hidden');
+      removeBtn.classList.add('inline-flex');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+export function handleTenantIdCardPhotoUpload(e) {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const dataUrl = event.target.result;
+    const dataInput = document.getElementById('tenant-idcard-photo-data');
+    if (dataInput) dataInput.value = dataUrl;
+    const preview = document.getElementById('tenant-idcard-preview');
+    const placeholder = document.getElementById('tenant-idcard-placeholder');
+    const removeBtn = document.getElementById('tenant-idcard-remove-btn');
+    if (preview) {
+      preview.src = dataUrl;
+      preview.classList.remove('hidden');
+    }
+    if (placeholder) placeholder.classList.add('hidden');
+    if (removeBtn) {
+      removeBtn.classList.remove('hidden');
+      removeBtn.classList.add('inline-flex');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+export function viewTenantPhoto(photoUrl, name = 'រូបថត') {
+  if (!photoUrl) return;
   const modal = document.getElementById('photo-viewer-modal');
   const img = document.getElementById('photo-viewer-img');
   const title = document.getElementById('photo-viewer-title');
   const downloadBtn = document.getElementById('photo-viewer-download-btn');
-  if (!modal || !img) return;
-
-  img.src = photoUrl;
+  if (img) img.src = photoUrl;
+  if (title) title.innerHTML = `<i class="fa-solid fa-image text-blue-600 text-sm"></i> <span>${name}</span>`;
   if (downloadBtn) {
     downloadBtn.href = photoUrl;
-    downloadBtn.download = `${(name || 'photo').replace(/[^a-zA-Z0-9_\u1780-\u17FF]/g, '_')}.jpg`;
+    downloadBtn.download = `${name.replace(/\s+/g, '_')}.jpg`;
   }
-  if (title) title.innerHTML = `<i class="fa-solid fa-image text-blue-600"></i> <span>${name}</span>`;
-  modal.classList.remove('hidden');
+  if (modal) modal.classList.remove('hidden');
 }
 
 export function closePhotoViewer() {
@@ -731,52 +682,11 @@ export function closePhotoViewer() {
   if (modal) modal.classList.add('hidden');
 }
 
-let currentViewingTenantId = null;
-
-// Quick helper to upload ID Card photo directly from Tenant Details Modal
-export function quickUploadIdCard(tenantId) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const base64 = evt.target.result;
-      store.updateTenant(tenantId, { idCardPhotoUrl: base64 });
-      showToast('បានរក្សាទុករូបថតអត្តសញ្ញាណប័ណ្ណជោគជ័យ ✓', 'success');
-      renderTenants();
-      viewTenantDetails(tenantId);
-    };
-    reader.readAsDataURL(file);
-  };
-  input.click();
-}
-window.quickUploadIdCard = quickUploadIdCard;
-
-// Quick helper to snap ID Card photo directly from Camera
-export function quickSnapIdCard(tenantId) {
-  window._pendingIdCardTenantId = tenantId;
-  triggerCameraCapture('idcard');
-}
-window.quickSnapIdCard = quickSnapIdCard;
-
-// Quick helper to remove ID Card photo
-export function removeIdCardPhotoForTenant(tenantId) {
-  store.updateTenant(tenantId, { idCardPhotoUrl: '' });
-  showToast('បានលុបរូបថតអត្តសញ្ញាណប័ណ្ណរួចរាល់', 'info');
-  renderTenants();
-  viewTenantDetails(tenantId);
-}
-window.removeIdCardPhotoForTenant = removeIdCardPhotoForTenant;
-
-// Helper to calculate exact duration of stay in Khmer
-function calculateStayDuration(startDateStr) {
-  if (!startDateStr) return 'មិនបានបញ្ជាក់';
-  const start = new Date(startDateStr);
+function calculateStayDuration(startDate) {
+  if (!startDate) return 'មិនបានបញ្ជាក់';
+  const start = new Date(startDate);
   const now = new Date();
-  if (isNaN(start.getTime())) return startDateStr;
+  if (isNaN(start.getTime())) return 'មិនត្រឹមត្រូវ';
 
   let years = now.getFullYear() - start.getFullYear();
   let months = now.getMonth() - start.getMonth();
@@ -803,14 +713,9 @@ function calculateStayDuration(startDateStr) {
   return `${parts.join(' ')} (សរុប ${totalDays} ថ្ងៃ)`;
 }
 
-// Open Full Detail View for a Tenant
 export function viewTenantDetails(tenantId) {
-  currentViewingTenantId = tenantId;
   const tenant = store.getTenantById(tenantId);
-  if (!tenant) {
-    showToast('រកមិនឃើញទិន្នន័យអ្នកជួលនេះទេ', 'warning');
-    return;
-  }
+  if (!tenant) return;
 
   const modal = document.getElementById('tenant-view-modal');
   const content = document.getElementById('tenant-view-content');
@@ -822,9 +727,6 @@ export function viewTenantDetails(tenantId) {
   const cleanRoomNum = room ? ((room.roomNumber || '').replace(/^room[-_]?/i, '') || room.roomNumber) : '';
   const settings = store.getSettings();
   const exchangeRate = settings.exchangeRate || 4000;
-
-  const idCardPhoto = tenant.idCardPhotoUrl || tenant.idCardPhoto || tenant.idCardImage || '';
-  const profilePhoto = tenant.photoUrl || tenant.photo || tenant.avatarUrl || '';
 
   const roomTypeMap = {
     fan: { label: 'បន្ទប់កង្ហារ', icon: 'fa-fan', color: 'text-blue-600' },
@@ -840,8 +742,6 @@ export function viewTenantDetails(tenantId) {
   const depositKhr = Math.round(depositUsd * exchangeRate);
 
   const isOccupied = (tenant.status || 'active') === 'active';
-  
-  // THREE-COLOR SYSTEM: Green (Active/Paid), Red (Inactive/Unpaid/Emergency), Blue (Primary/Room/ID/Actions)
   const statusBadge = isOccupied
     ? `<span class="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ស្នាក់នៅ</span>`
     : `<span class="px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs"><span class="w-2 h-2 rounded-full bg-rose-400"></span> បានចាកចេញ</span>`;
@@ -850,7 +750,6 @@ export function viewTenantDetails(tenantId) {
     ? `<span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs"><i class="fa-solid fa-venus text-[10px]"></i> ស្រី</span>`
     : `<span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs"><i class="fa-solid fa-mars text-[10px]"></i> ប្រុស</span>`;
 
-  // Fetch all invoices for this tenant
   const allInvoices = store.getInvoices();
   const cleanPhone = (tenant.phone || '').replace(/\D/g, '');
   const tenantInvoices = allInvoices.filter(i => {
@@ -870,30 +769,18 @@ export function viewTenantDetails(tenantId) {
   const totalUnpaidUsd = unpaidInvoices.reduce((sum, i) => sum + (i.totalUsd || 0), 0);
   const totalUnpaidKhr = unpaidInvoices.reduce((sum, i) => sum + (i.totalKhr || 0), 0);
 
-  // Render Full Content
+  const idCardPhoto = tenant.idCardPhotoUrl || tenant.idCardPhoto || tenant.idCardImage;
+
   content.innerHTML = `
-    <!-- 1. Hero Card: Profile Avatar + Name + Core Badges (Blue Base) -->
     <div class="bg-gradient-to-r from-blue-900 via-slate-900 to-blue-950 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-blue-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div class="flex items-center gap-3.5 min-w-0">
-        <!-- Avatar -->
-        <div class="relative flex-shrink-0">
-          ${profilePhoto ? `
-            <img src="${profilePhoto}" onclick="window.viewTenantPhoto('${profilePhoto}', '${tenant.name}')" 
-                 class="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl object-cover border-2 border-white/80 shadow-md cursor-pointer hover:scale-105 transition" 
-                 title="ចុចដើម្បីមើលរូបភាពពេញ">
-          ` : `
-            <div class="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-blue-700 text-white flex items-center justify-center font-bold text-2xl sm:text-3xl border border-blue-400/40 shadow-inner">
-              ${tenant.name.charAt(0)}
-            </div>
-          `}
-          ${profilePhoto ? `
-            <button onclick="window.viewTenantPhoto('${profilePhoto}', '${tenant.name}')" class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-[10px] shadow-sm border border-white" title="មើលរូបពេញ">
-              <i class="fa-solid fa-magnifying-glass-plus"></i>
-            </button>
-          ` : ''}
-        </div>
-
-        <!-- Name & Badges -->
+        ${tenant.photoUrl ? `
+          <img src="${tenant.photoUrl}" onclick="window.viewTenantPhoto('${tenant.photoUrl}', '${tenant.name}')" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-blue-400/40 shadow-inner flex-shrink-0 cursor-pointer hover:opacity-90" title="ចុចមើលរូបធំ">
+        ` : `
+          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl sm:text-2xl border border-blue-400/40 shadow-inner flex-shrink-0">
+            <i class="fa-solid fa-user text-lg sm:text-xl"></i>
+          </div>
+        `}
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">${tenant.name}</h2>
@@ -909,8 +796,6 @@ export function viewTenantDetails(tenantId) {
           </div>
         </div>
       </div>
-
-      <!-- Quick Room Badge (Blue Accent) -->
       <div class="w-full sm:w-auto bg-blue-950/80 p-3 rounded-xl border border-blue-800/60 text-left sm:text-right flex sm:flex-col justify-between items-center sm:items-end flex-shrink-0">
         <div>
           <span class="text-[10px] text-blue-200 block uppercase tracking-wider font-medium">បន្ទប់ស្នាក់នៅ</span>
@@ -922,20 +807,18 @@ export function viewTenantDetails(tenantId) {
       </div>
     </div>
 
-    <!-- 2. Personal & Contact Information Card -->
     <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3.5">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
         <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
           <i class="fa-solid fa-user-shield text-blue-600 text-sm"></i>
           <span>ព័ត៌មានផ្ទាល់ខ្លួន & ទំនាក់ទំនង</span>
         </h4>
-        <a href="tel:${tenant.phone}" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition active:scale-95">
+        <a href="tel:${tenant.phone}" class="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs inline-flex items-center gap-1.5 shadow-2xs transition">
           <i class="fa-solid fa-phone text-xs"></i> <span>ខលផ្ទាល់</span>
         </a>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-        <!-- 1. Full Name -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
           <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
             <i class="fa-solid fa-user text-blue-600"></i> ឈ្មោះពេញ
@@ -943,7 +826,6 @@ export function viewTenantDetails(tenantId) {
           <span class="font-bold text-slate-800 text-xs sm:text-sm">${tenant.name}</span>
         </div>
 
-        <!-- 2. Gender -->
         <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
           <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
             <i class="fa-solid fa-venus-mars text-blue-600"></i> ភេទ
@@ -951,7 +833,6 @@ export function viewTenantDetails(tenantId) {
           <span class="font-bold text-slate-800 text-xs sm:text-sm">${tenant.gender === 'female' ? 'ស្រី (Female)' : 'ប្រុស (Male)'}</span>
         </div>
 
-        <!-- 3. Phone Number (Green Theme) -->
         <div class="bg-emerald-50/50 p-2.5 sm:p-3 rounded-xl border border-emerald-100">
           <span class="text-slate-500 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
             <i class="fa-solid fa-phone text-emerald-600"></i> លេខទូរស័ព្ទ
@@ -960,13 +841,9 @@ export function viewTenantDetails(tenantId) {
             <a href="tel:${tenant.phone}" class="font-bold font-mono text-emerald-700 text-xs sm:text-sm hover:underline flex items-center gap-1.5">
               ${tenant.phone}
             </a>
-            <a href="https://t.me/+855${tenant.phone.replace(/^0/, '')}" target="_blank" class="px-2 py-0.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-sans font-semibold text-[10px] inline-flex items-center gap-1 border border-blue-200" title="ឆាតតាម Telegram">
-              <i class="fa-brands fa-telegram text-xs text-blue-500"></i> Telegram
-            </a>
           </div>
         </div>
 
-        <!-- 4. Emergency Phone (Red Theme) -->
         <div class="bg-rose-50/50 p-2.5 sm:p-3 rounded-xl border border-rose-100">
           <span class="text-slate-500 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
             <i class="fa-solid fa-phone-volume text-rose-500"></i> លេខទូរស័ព្ទបន្ទាន់
@@ -980,54 +857,13 @@ export function viewTenantDetails(tenantId) {
           `}
         </div>
 
-        <!-- 5. National ID Card (Small & Compact 1 Column & 1 Row) -->
-        <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100 flex flex-col justify-between gap-2">
-          <div>
-            <div class="flex items-center justify-between">
-              <span class="text-slate-400 text-[10px] sm:text-[11px] flex items-center gap-1">
-                <i class="fa-solid fa-address-card text-blue-600"></i> លេខអត្តសញ្ញាណប័ណ្ណ
-              </span>
-              ${idCardPhoto ? `<span class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> មានរូប</span>` : ''}
-            </div>
-            <div class="font-bold font-mono text-slate-800 text-xs sm:text-sm mt-0.5">
-              ${tenant.idCard || '<span class="text-slate-400 font-normal font-sans text-xs">មិនទាន់បញ្ចូលលេខ</span>'}
-            </div>
-          </div>
-
-          <!-- Compact 1 Row with Photo Thumbnail & Actions -->
-          ${idCardPhoto ? `
-            <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-200/70">
-              <div onclick="window.viewTenantPhoto('${idCardPhoto}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" class="relative group cursor-pointer flex-shrink-0" title="ចុចមើលរូបពេញ">
-                <img src="${idCardPhoto}" alt="ID Card" class="w-14 h-9 sm:w-16 sm:h-10 rounded-lg object-cover border border-blue-200 shadow-2xs group-hover:scale-105 transition">
-                <div class="absolute inset-0 bg-black/25 group-hover:bg-black/40 rounded-lg flex items-center justify-center transition opacity-0 group-hover:opacity-100">
-                  <i class="fa-solid fa-magnifying-glass text-white text-[10px]"></i>
-                </div>
-              </div>
-              <div class="flex items-center gap-1 flex-wrap justify-end">
-                <button type="button" onclick="window.viewTenantPhoto('${idCardPhoto}', '${tenant.name} (អត្តសញ្ញាណប័ណ្ណ)')" class="px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold flex items-center gap-1 border border-blue-200 transition" title="មើលរូបធំ">
-                  <i class="fa-solid fa-eye text-[10px]"></i> <span>មើល</span>
-                </button>
-                <button type="button" onclick="window.quickUploadIdCard('${tenant.id}')" class="px-1.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200 transition" title="ប្តូររូប">
-                  <i class="fa-solid fa-camera text-slate-500 text-[10px]"></i>
-                </button>
-                <button type="button" onclick="window.removeIdCardPhotoForTenant('${tenant.id}')" class="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition" title="លុបរូប">
-                  <i class="fa-solid fa-trash-can text-[10px]"></i>
-                </button>
-              </div>
-            </div>
-          ` : `
-            <div class="flex items-center gap-1.5 pt-1.5 border-t border-slate-200/70">
-              <button type="button" onclick="window.quickSnapIdCard('${tenant.id}')" class="flex-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold inline-flex items-center justify-center gap-1 shadow-2xs transition">
-                <i class="fa-solid fa-camera text-[10px]"></i> <span>ថតកាត</span>
-              </button>
-              <button type="button" onclick="window.quickUploadIdCard('${tenant.id}')" class="flex-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[11px] font-semibold inline-flex items-center justify-center gap-1 border border-blue-200 transition">
-                <i class="fa-solid fa-image text-[10px]"></i> <span>ជ្រើសរូប</span>
-              </button>
-            </div>
-          `}
+        <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
+          <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
+            <i class="fa-solid fa-id-card text-blue-600"></i> អត្តសញ្ញាណប័ណ្ណ
+          </span>
+          <span class="font-bold font-mono text-slate-800 text-xs sm:text-sm">${tenant.idCard || '<span class="text-slate-400 font-normal italic">គ្មាន</span>'}</span>
         </div>
 
-        <!-- 6. Hometown / Origin Address (1 Column) -->
         <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100 flex flex-col justify-between">
           <div>
             <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
@@ -1037,9 +873,17 @@ export function viewTenantDetails(tenantId) {
           </div>
         </div>
       </div>
+
+      ${idCardPhoto ? `
+        <div class="pt-2 border-t border-slate-100">
+          <span class="text-slate-500 text-xs font-semibold block mb-1.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-image text-blue-600"></i> រូបថតអត្តសញ្ញាណប័ណ្ណ
+          </span>
+          <img src="${idCardPhoto}" onclick="window.viewTenantPhoto('${idCardPhoto}', 'អត្តសញ្ញាណប័ណ្ណ - ${tenant.name}')" class="h-28 sm:h-36 rounded-xl object-cover border border-slate-200 cursor-pointer hover:opacity-90 transition shadow-xs" title="ចុចមើលរូបធំ">
+        </div>
+      ` : ''}
     </div>
 
-    <!-- 3. Room & Lease Contract Information Card (Blue & Green Accents) -->
     <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
         <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
@@ -1055,7 +899,6 @@ export function viewTenantDetails(tenantId) {
 
       ${room ? `
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
-          <!-- Room Number (Blue) -->
           <div class="bg-blue-50/70 p-2.5 sm:p-3 rounded-xl border border-blue-100">
             <span class="text-blue-600 text-[10px] sm:text-[11px] block mb-0.5 font-semibold">បន្ទប់ស្នាក់នៅ</span>
             <span class="font-bold text-blue-900 text-sm sm:text-base flex items-center gap-1.5">
@@ -1063,13 +906,11 @@ export function viewTenantDetails(tenantId) {
             </span>
           </div>
 
-          <!-- Floor -->
           <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
             <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5">ជាន់ទី</span>
             <span class="font-bold text-slate-800 text-xs sm:text-sm">ជាន់ទី ${room.floor || 1}</span>
           </div>
 
-          <!-- Room Type -->
           <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
             <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5">ប្រភេទបន្ទប់</span>
             <span class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
@@ -1077,27 +918,23 @@ export function viewTenantDetails(tenantId) {
             </span>
           </div>
 
-          <!-- Monthly Rent (Green Theme) -->
           <div class="bg-emerald-50/70 p-2.5 sm:p-3 rounded-xl border border-emerald-100">
             <span class="text-emerald-700 text-[10px] sm:text-[11px] block mb-0.5 font-semibold">ថ្លៃឈ្នួលបន្ទប់ / ខែ</span>
             <div class="font-bold font-mono text-emerald-700 text-sm sm:text-base">$${priceUsd}</div>
             <div class="text-[10px] text-slate-500 font-mono">≈ ${priceKhr.toLocaleString()} ៛</div>
           </div>
 
-          <!-- Deposit (Blue Theme) -->
           <div class="bg-blue-50/70 p-2.5 sm:p-3 rounded-xl border border-blue-100">
             <span class="text-blue-700 text-[10px] sm:text-[11px] block mb-0.5 font-semibold">ប្រាក់កក់ធានា</span>
             <div class="font-bold font-mono text-blue-800 text-sm sm:text-base">$${depositUsd}</div>
             <div class="text-[10px] text-slate-500 font-mono">≈ ${depositKhr.toLocaleString()} ៛</div>
           </div>
 
-          <!-- Move-in Date -->
           <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
             <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5">ថ្ងៃចូលស្នាក់នៅ</span>
             <span class="font-bold font-mono text-slate-800 text-xs sm:text-sm">${tenant.startDate || '-'}</span>
           </div>
 
-          <!-- Stay Duration -->
           <div class="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100 col-span-2 sm:col-span-3">
             <span class="text-slate-400 text-[10px] sm:text-[11px] block mb-0.5 flex items-center gap-1">
               <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> រយៈពេលដែលបានស្នាក់នៅ
@@ -1124,7 +961,6 @@ export function viewTenantDetails(tenantId) {
       `}
     </div>
 
-    <!-- 4. Billing & Payment History Summary (3 Colors: Blue Total, Green Paid, Red Unpaid) -->
     <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
         <h4 class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
@@ -1134,20 +970,16 @@ export function viewTenantDetails(tenantId) {
         <span class="text-[11px] text-slate-400 font-mono">Billing & Invoices</span>
       </div>
 
-      <!-- 3 Summary Metric Cards: Blue (Total), Green (Paid), Red (Unpaid) -->
       <div class="grid grid-cols-3 gap-2 sm:gap-3 pt-1">
-        <!-- Blue: Total Invoices -->
         <div class="bg-blue-50/70 p-2.5 sm:p-3 rounded-xl border border-blue-100 text-center">
           <span class="text-[10px] sm:text-[11px] text-blue-700 block font-semibold">វិក្កយបត្រសរុប</span>
           <span class="text-base sm:text-lg font-bold font-mono text-blue-900">${totalInvoices}</span>
         </div>
-        <!-- Green: Paid -->
         <div class="bg-emerald-50/70 p-2.5 sm:p-3 rounded-xl border border-emerald-100 text-center">
           <span class="text-[10px] sm:text-[11px] text-emerald-700 block font-semibold">បានបង់រួច</span>
           <span class="text-xs sm:text-sm font-bold font-mono text-emerald-700 block">$${totalPaidUsd.toFixed(2)}</span>
           <span class="text-[9px] sm:text-[10px] text-slate-500 font-mono block">≈ ${totalPaidKhr.toLocaleString()} ៛</span>
         </div>
-        <!-- Red: Unpaid Debt -->
         <div class="bg-rose-50/70 p-2.5 sm:p-3 rounded-xl border border-rose-100 text-center">
           <span class="text-[10px] sm:text-[11px] text-rose-700 block font-semibold">ជំពាក់/មិនទាន់បង់</span>
           <span class="text-xs sm:text-sm font-bold font-mono text-rose-700 block">$${totalUnpaidUsd.toFixed(2)}</span>
@@ -1155,7 +987,6 @@ export function viewTenantDetails(tenantId) {
         </div>
       </div>
 
-      <!-- Invoices List Table -->
       <div class="overflow-x-auto border border-slate-100 rounded-xl mt-2">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
@@ -1179,41 +1010,40 @@ export function viewTenantDetails(tenantId) {
               }
 
               return `
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="py-2.5 px-3 font-mono font-bold text-blue-900">${inv.invoiceNumber}</td>
-                  <td class="py-2.5 px-3 whitespace-nowrap">
-                    <div class="font-mono font-bold text-slate-700">${inv.month}</div>
-                    <div class="text-[10px] text-blue-600 font-sans">
-                      ${inv.startDate && (inv.paymentDate || inv.createdAt) ? `${new Date(inv.startDate).getDate()}/${new Date(inv.startDate).getMonth()+1} → ${new Date(inv.paymentDate || inv.createdAt).getDate()}/${new Date(inv.paymentDate || inv.createdAt).getMonth()+1} (១ ខែ)` : 'រយៈពេល ១ ខែ'}
-                    </div>
-                  </td>
-                  <td class="py-2.5 px-3 font-mono font-bold text-slate-900">
-                    <span class="text-emerald-700">$${(inv.totalUsd || 0).toFixed(2)}</span>
-                    <span class="text-[10px] text-slate-400 font-normal">(${(inv.totalKhr || 0).toLocaleString()} ៛)</span>
-                  </td>
-                  <td class="py-2.5 px-3">${invBadge}</td>
-                  <td class="py-2.5 px-3 text-right">
-                    <button onclick="window.closeTenantViewModal(); window.viewInvoiceModal('${inv.id}')" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[11px] font-semibold transition border border-blue-200">
-                      <i class="fa-solid fa-receipt text-[10px]"></i> <span>មើលប័ណ្ណ</span>
-                    </button>
+                  <tr class="hover:bg-slate-50 transition">
+                    <td class="py-2.5 px-3 font-mono font-bold text-blue-900">${inv.invoiceNumber}</td>
+                    <td class="py-2.5 px-3 whitespace-nowrap">
+                      <div class="font-mono font-bold text-slate-700">${inv.month}</div>
+                      <div class="text-[10px] text-blue-600 font-sans">
+                        ${inv.startDate && (inv.paymentDate || inv.createdAt) ? `${new Date(inv.startDate).getDate()}/${new Date(inv.startDate).getMonth() + 1} → ${new Date(inv.paymentDate || inv.createdAt).getDate()}/${new Date(inv.paymentDate || inv.createdAt).getMonth() + 1} (១ ខែ)` : 'រយៈពេល ១ ខែ'}
+                      </div>
+                    </td>
+                    <td class="py-2.5 px-3 font-mono font-bold text-slate-900">
+                      <span class="text-emerald-700">$${(inv.totalUsd || 0).toFixed(2)}</span>
+                      <span class="text-[10px] text-slate-400 font-normal">(${(inv.totalKhr || 0).toLocaleString()} ៛)</span>
+                    </td>
+                    <td class="py-2.5 px-3">${invBadge}</td>
+                    <td class="py-2.5 px-3 text-right">
+                      <button onclick="window.closeTenantViewModal(); window.viewInvoiceModal('${inv.id}')" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[11px] font-semibold transition border border-blue-200">
+                        <i class="fa-solid fa-receipt text-[10px]"></i> <span>មើលប័ណ្ណ</span>
+                      </button>
+                    </td>
+                  </tr>
+                `;
+            }).join('') : `
+                <tr>
+                  <td colspan="5" class="py-6 text-center text-slate-400 text-xs">
+                    <i class="fa-solid fa-receipt text-slate-300 text-lg block mb-1"></i>
+                    <span>មិនទាន់មានប្រវត្តិវិក្កយបត្រនៅឡើយទេ</span>
                   </td>
                 </tr>
-              `;
-            }).join('') : `
-              <tr>
-                <td colspan="5" class="py-6 text-center text-slate-400 text-xs">
-                  <i class="fa-solid fa-receipt text-slate-300 text-lg block mb-1"></i>
-                  <span>មិនទាន់មានប្រវត្តិវិក្កយបត្រនៅឡើយទេ</span>
-                </td>
-              </tr>
-            `}
+              `}
           </tbody>
         </table>
       </div>
     </div>
   `;
 
-  // Render Footer Actions (Green Call, Blue Create Invoice & Edit, Slate/Red Close)
   footer.innerHTML = `
     <div class="flex items-center gap-2">
       <a href="tel:${tenant.phone}" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition active:scale-95">
@@ -1227,6 +1057,9 @@ export function viewTenantDetails(tenantId) {
     </div>
 
     <div class="flex items-center gap-2">
+      <button onclick="window.printTenantDetails('${tenant.id}')" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs flex items-center gap-1.5 transition active:scale-95">
+        <i class="fa-solid fa-print text-slate-600 text-xs"></i> <span>បោះពុម្ព</span>
+      </button>
       <button onclick="window.closeTenantViewModal(); window.openTenantModal('${tenant.id}')" class="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-semibold text-xs flex items-center gap-1.5 border border-blue-200 transition active:scale-95">
         <i class="fa-solid fa-pen-to-square text-blue-600 text-xs"></i> <span>កែប្រែ</span>
       </button>
@@ -1245,7 +1078,7 @@ export function closeTenantViewModal() {
 }
 
 export function printTenantDetails(tenantId = null) {
-  const id = tenantId || currentViewingTenantId;
+  const id = tenantId;
   if (!id) return;
   const tenant = store.getTenantById(id);
   if (!tenant) return;
@@ -1263,82 +1096,79 @@ export function printTenantDetails(tenantId = null) {
   printWindow.document.write(`
     <!DOCTYPE html>
     <html lang="km">
-    <head>
-      <meta charset="UTF-8">
-      <title>ព័ត៌មានអ្នកជួល - ${tenant.name}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;600;700&display=swap" rel="stylesheet">
-      <style>
-        body { font-family: 'Battambang', sans-serif; padding: 28px; color: #1e293b; font-size: 13px; line-height: 1.6; }
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; }
-        .title { font-size: 18px; font-weight: bold; color: #0f172a; }
-        .sub { font-size: 11px; color: #64748b; }
-        .section-title { font-size: 14px; font-weight: bold; color: #1e40af; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin: 16px 0 8px 0; }
-        .grid { display: flex; flex-wrap: wrap; margin-bottom: 12px; }
-        .col { width: 50%; margin-bottom: 8px; }
-        .label { font-size: 11px; color: #64748b; display: block; }
-        .val { font-size: 13px; font-weight: 600; color: #0f172a; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: #eff6ff; color: #1d4ed8; }
-        .photo-box { display: flex; gap: 16px; align-items: center; background: #f8fafc; padding: 12px; border-radius: 10px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
-        .photo { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1; }
-        @media print { button { display: none; } }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div>
-          <div class="title">${settings.appName || 'ប្រព័ន្ធគ្រប់គ្រងបន្ទប់ជួល'}</div>
-          <div class="sub">ប័ណ្ណព័ត៌មានអ្នកជួល (Tenant Profile Information)</div>
+      <head>
+        <meta charset="UTF-8">
+        <title>ព័ត៌មានអ្នកជួល - ${tenant.name}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+          body { font-family: 'Battambang', sans-serif; padding: 28px; color: #1e293b; font-size: 13px; line-height: 1.6; }
+          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; }
+          .title { font-size: 18px; font-weight: bold; color: #0f172a; }
+          .sub { font-size: 11px; color: #64748b; }
+          .section-title { font-size: 14px; font-weight: bold; color: #1e40af; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin: 16px 0 8px 0; }
+          .grid { display: flex; flex-wrap: wrap; margin-bottom: 12px; }
+          .col { width: 50%; margin-bottom: 8px; }
+          .label { font-size: 11px; color: #64748b; display: block; }
+          .val { font-size: 13px; font-weight: 600; color: #0f172a; }
+          .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: #eff6ff; color: #1d4ed8; }
+          .photo-box { display: flex; gap: 16px; align-items: center; background: #f8fafc; padding: 12px; border-radius: 10px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+          .photo { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1; }
+          @media print { button { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="title">${settings.appName || 'ប្រព័ន្ធគ្រប់គ្រងបន្ទប់ជួល'}</div>
+            <div class="sub">ប័ណ្ណព័ត៌មានអ្នកជួល (Tenant Profile Information)</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="val">កាលបរិច្ឆេទ: ${new Date().toLocaleDateString('km-KH')}</div>
+            <div class="sub">ID: ${tenant.id}</div>
+          </div>
         </div>
-        <div style="text-align: right;">
-          <div class="val">កាលបរិច្ឆេទ: ${new Date().toLocaleDateString('km-KH')}</div>
-          <div class="sub">ID: ${tenant.id}</div>
-        </div>
-      </div>
 
-      <div class="photo-box">
-        ${tenant.photoUrl ? `<img src="${tenant.photoUrl}" class="photo">` : ''}
-        <div>
+        <div style="background: #f8fafc; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; border: 1px solid #e2e8f0;">
           <h2 style="margin: 0; font-size: 17px; color: #0f172a;">${tenant.name}</h2>
-          <div style="margin-top: 4px; display: flex; gap: 6px;">
+          <div style="margin-top: 6px; display: flex; gap: 8px;">
             <span class="badge">ភេទ: ${tenant.gender === 'female' ? 'ស្រី' : 'ប្រុស'}</span>
             <span class="badge" style="background: #ecfdf5; color: #059669;">ស្ថានភាព: ${(tenant.status || 'active') === 'active' ? 'កំពុងស្នាក់នៅ' : 'បានចាកចេញ'}</span>
             <span class="badge" style="background: #eff6ff; color: #2563eb;">បន្ទប់: ${cleanRoomNum}</span>
           </div>
         </div>
-      </div>
 
-      <div class="section-title">១. ព័ត៌មានផ្ទាល់ខ្លួន & ទំនាក់ទំនង</div>
-      <div class="grid">
-        <div class="col"><span class="label">ឈ្មោះពេញ:</span><span class="val">${tenant.name}</span></div>
-        <div class="col"><span class="label">លេខទូរស័ព្ទ:</span><span class="val">${tenant.phone}</span></div>
-        <div class="col"><span class="label">លេខទូរស័ព្ទបន្ទាន់:</span><span class="val">${tenant.emergencyPhone || 'គ្មាន'}</span></div>
-        <div class="col"><span class="label">លេខអត្តសញ្ញាណប័ណ្ណ:</span><span class="val">${tenant.idCard || 'មិនទាន់មាន'}</span></div>
-        <div class="col" style="width: 100%;"><span class="label">អាសយដ្ឋានដើម / ស្រុកកំណើត:</span><span class="val">${tenant.address || 'មិនបានបញ្ជាក់'}</span></div>
-      </div>
-
-      <div class="section-title">២. ព័ត៌មានបន្ទប់ស្នាក់នៅ & កិច្ចសន្យា</div>
-      <div class="grid">
-        <div class="col"><span class="label">លេខបន្ទប់:</span><span class="val">បន្ទប់ ${cleanRoomNum} (ជាន់ទី ${room ? room.floor || 1 : 1})</span></div>
-        <div class="col"><span class="label">ថ្លៃឈ្នួលបន្ទប់:</span><span class="val">$${room ? (room.price || room.rent || 0) : 0}/ខែ (≈ ${(Math.round((room ? room.price || 0 : 0) * (settings.exchangeRate || 4000))).toLocaleString()} ៛)</span></div>
-        <div class="col"><span class="label">ប្រាក់កក់:</span><span class="val">$${room ? room.deposit || 0 : 0}</span></div>
-        <div class="col"><span class="label">ថ្ងៃចូលស្នាក់នៅ:</span><span class="val">${tenant.startDate || '-'}</span></div>
-      </div>
-
-      <div style="margin-top: 40px; display: flex; justify-content: space-between; text-align: center;">
-        <div>
-          <div>ហត្ថលេខាម្ចាស់ផ្ទះ</div>
-          <div style="margin-top: 50px; font-weight: bold;">${settings.landlordName || 'ម្ចាស់ផ្ទះ'}</div>
+        <div class="section-title">១. ព័ត៌មានផ្ទាល់ខ្លួន & ទំនាក់ទំនង</div>
+        <div class="grid">
+          <div class="col"><span class="label">ឈ្មោះពេញ:</span><span class="val">${tenant.name}</span></div>
+          <div class="col"><span class="label">លេខទូរស័ព្ទ:</span><span class="val">${tenant.phone}</span></div>
+          <div class="col"><span class="label">លេខទូរស័ព្ទបន្ទាន់:</span><span class="val">${tenant.emergencyPhone || 'គ្មាន'}</span></div>
+          <div class="col"><span class="label">លេខអត្តសញ្ញាណប័ណ្ណ:</span><span class="val">${tenant.idCard || 'មិនទាន់មាន'}</span></div>
+          <div class="col" style="width: 100%;"><span class="label">អាសយដ្ឋានដើម / ស្រុកកំណើត:</span><span class="val">${tenant.address || 'មិនបានបញ្ជាក់'}</span></div>
         </div>
-        <div>
-          <div>ហត្ថលេខាអ្នកជួល</div>
-          <div style="margin-top: 50px; font-weight: bold;">${tenant.name}</div>
-        </div>
-      </div>
 
-      <script>
-        window.onload = function() { window.print(); }
-      </script>
-    </body>
+        <div class="section-title">២. ព័ត៌មានបន្ទប់ស្នាក់នៅ & កិច្ចសន្យា</div>
+        <div class="grid">
+          <div class="col"><span class="label">លេខបន្ទប់:</span><span class="val">បន្ទប់ ${cleanRoomNum} (ជាន់ទី ${room ? room.floor || 1 : 1})</span></div>
+          <div class="col"><span class="label">ថ្លៃឈ្នួលបន្ទប់:</span><span class="val">$${room ? (room.price || room.rent || 0) : 0}/ខែ (≈ ${(Math.round((room ? room.price || 0 : 0) * (settings.exchangeRate || 4000))).toLocaleString()} ៛)</span></div>
+          <div class="col"><span class="label">ប្រាក់កក់:</span><span class="val">$${room ? room.deposit || 0 : 0}</span></div>
+          <div class="col"><span class="label">ថ្ងៃចូលស្នាក់នៅ:</span><span class="val">${tenant.startDate || '-'}</span></div>
+        </div>
+
+        <div style="margin-top: 40px; display: flex; justify-content: space-between; text-align: center;">
+          <div>
+            <div>ហត្ថលេខាម្ចាស់ផ្ទះ</div>
+            <div style="margin-top: 50px; font-weight: bold;">${settings.landlordName || 'ម្ចាស់ផ្ទះ'}</div>
+          </div>
+          <div>
+            <div>ហត្ថលេខាអ្នកជួល</div>
+            <div style="margin-top: 50px; font-weight: bold;">${tenant.name}</div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() { window.print(); }
+        </script>
+      </body>
     </html>
   `);
   printWindow.document.close();
@@ -1347,4 +1177,8 @@ export function printTenantDetails(tenantId = null) {
 window.viewTenantDetails = viewTenantDetails;
 window.closeTenantViewModal = closeTenantViewModal;
 window.printTenantDetails = printTenantDetails;
+window.openTenantModal = openTenantModal;
+window.closeTenantModal = closeTenantModal;
+window.handleTenantFormSubmit = handleTenantFormSubmit;
+
 

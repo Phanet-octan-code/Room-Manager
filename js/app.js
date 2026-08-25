@@ -8,18 +8,15 @@ import {
   openTenantModal,
   closeTenantModal,
   handleTenantFormSubmit,
-  handleTenantPhotoUpload,
-  handleTenantIdCardPhotoUpload,
-  viewTenantPhoto,
-  closePhotoViewer,
   viewTenantDetails,
   closeTenantViewModal,
   printTenantDetails,
-  quickUploadIdCard,
-  quickSnapIdCard,
-  removeIdCardPhotoForTenant
+  viewTenantPhoto,
+  closePhotoViewer,
+  handleTenantPhotoUpload,
+  handleTenantIdCardPhotoUpload
 } from './tenants.js';
-import { renderUtilities, calculateRow, saveAllUtilities } from './utilities.js';
+import { renderUtilities, calculateRow, saveAllUtilities, toggleUtilityFormulas } from './utilities.js';
 import {
   renderInvoices,
   openCreateInvoiceModal,
@@ -60,7 +57,8 @@ import {
   showLoginScreen,
   hideLoginScreen,
   checkAuthStatus,
-  togglePasswordVisibility
+  togglePasswordVisibility,
+  handleLoginSubmit
 } from './auth.js';
 import {
   loadSettingsForm,
@@ -103,6 +101,8 @@ window.closePhotoViewer = closePhotoViewer;
 window.viewTenantDetails = viewTenantDetails;
 window.closeTenantViewModal = closeTenantViewModal;
 window.printTenantDetails = printTenantDetails;
+window.handleTenantPhotoUpload = handleTenantPhotoUpload;
+window.handleTenantIdCardPhotoUpload = handleTenantIdCardPhotoUpload;
 window.deleteTenant = async (id) => {
   const ok = await showConfirm('តើអ្នកចង់លុបព័ត៌មានអ្នកជួលនេះមែនទេ?', { title: 'លុបអ្នកជួល', danger: true, okText: 'លុប' });
   if (ok) {
@@ -116,6 +116,7 @@ window.deleteTenant = async (id) => {
 
 window.calculateRow = calculateRow;
 window.saveAllUtilities = saveAllUtilities;
+window.toggleUtilityFormulas = toggleUtilityFormulas;
 
 window.openCreateInvoiceModal = openCreateInvoiceModal;
 window.closeCreateInvoiceModal = closeCreateInvoiceModal;
@@ -131,7 +132,6 @@ window.openUserModal = openUserModal;
 window.closeUserModal = closeUserModal;
 window.openChangePasswordModal = openChangePasswordModal;
 window.closeChangePasswordModal = closeChangePasswordModal;
-window.deleteUser = deleteUser;
 
 export function handleGlobalSearch(query) {
   const q = (query || '').trim();
@@ -381,37 +381,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById(id)?.addEventListener('input', recalcInvoiceGrandTotal);
   });
 
-  // Check Supabase connection
-  const supaResult = await initializeSupabase();
-  updateSupabaseBadge(supaResult.connected);
-
   // Login form handler
   document.getElementById('login-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const identifier = document.getElementById('login-username')?.value;
-    const password = document.getElementById('login-password')?.value;
-    const remember = document.getElementById('login-remember')?.checked;
-
-    const result = loginUser(identifier, password, remember);
-    if (result.success) {
-      hideLoginScreen();
-      updateAuthUI(result.user);
-      switchTab('dashboard');
-      updateDashboardStats();
-      showToast(`សូមស្វាគមន៍! បានចូលប្រើប្រាស់ជា ${result.user.name} 🎉`, 'success');
-    } else {
-      showToast(result.message, 'error');
-      const passInput = document.getElementById('login-password');
-      if (passInput) {
-        passInput.classList.add('border-rose-500', 'bg-rose-50');
-        setTimeout(() => passInput.classList.remove('border-rose-500', 'bg-rose-50'), 2000);
-      }
-    }
+    handleLoginSubmit(e);
   });
 
-  // Check Authentication Status
+  // Check Authentication Status immediately
   const isAuthenticated = checkAuthStatus();
   if (isAuthenticated) {
     switchTab('dashboard');
   }
+
+  // Check Supabase connection in background and auto-sync live data from Supabase
+  initializeSupabase().then(async supaResult => {
+    updateSupabaseBadge(supaResult && supaResult.connected);
+    if (supaResult && supaResult.connected) {
+      await store.loadFromSupabase();
+      console.log('✓ Auto-synced all live data (including Users & Admin) from Supabase.');
+    }
+  }).catch(err => {
+    console.warn('Supabase status check:', err);
+    updateSupabaseBadge(false);
+  });
 });

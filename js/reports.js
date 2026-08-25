@@ -47,7 +47,7 @@ export function renderReports() {
   // DOM update
   document.getElementById('rep-total-income-khr').innerText = `${grandTotalKhr.toLocaleString()} ៛`;
   document.getElementById('rep-total-income-usd').innerText = `$${grandTotalUsd.toFixed(2)}`;
-  
+
   document.getElementById('rep-collected-khr').innerText = `${totalCollectedKhr.toLocaleString()} ៛`;
   document.getElementById('rep-collected-usd').innerText = `$${collectedUsd.toFixed(2)}`;
 

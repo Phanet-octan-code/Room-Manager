@@ -245,10 +245,9 @@ class Store {
 
   addTenant(tenant) {
     const tenants = this.getTenants();
-    const count = tenants.length + 1;
-    const padCount = String(count).padStart(3, '0');
+    const uniqueId = tenant.id || `tenant_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const newTenant = {
-      id: `tenant_${padCount}`,
+      id: uniqueId,
       name: tenant.name,
       phone: tenant.phone,
       roomId: tenant.roomId || null,
