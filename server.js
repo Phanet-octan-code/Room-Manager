@@ -25,13 +25,14 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 let pool = null;
 let isDbConnected = false;
 let lastDbError = null;
+let schemaInitialized = false;
 
-function createPool(config) {
+function createPool(config = {}) {
   const host = config.host || process.env.DB_HOST || 'aws-0-ap-southeast-1.pooler.supabase.com';
   const port = parseInt(config.port || process.env.DB_PORT || 5432, 10);
   const database = config.database || process.env.DB_NAME || 'postgres';
   const user = config.user || process.env.DB_USER || 'postgres.rsaxtgzmyzinvyuimthi';
-  const password = config.password !== undefined ? config.password : (process.env.DB_PASSWORD || '');
+  const password = config.password !== undefined ? config.password : (process.env.DB_PASSWORD || '0QT8YTYv3DbDlbRl');
 
   return new Pool({
     host,
@@ -41,7 +42,8 @@ function createPool(config) {
     password,
     ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: 10000,
-    idleTimeoutMillis: 30000
+    idleTimeoutMillis: 30000,
+    max: 10
   });
 }
 
@@ -66,45 +68,92 @@ async function initDatabase(dbPool) {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);
-    console.log('[Supabase Postgres] Database schema verified successfully.');
+    schemaInitialized = true;
     isDbConnected = true;
     lastDbError = null;
+    return true;
+  } catch (err) {
+    lastDbError = err.message;
+    console.error('[Supabase Schema Init Error]:', err.message);
+    throw err;
   } finally {
     client.release();
   }
 }
 
-// Attempt initial connection
-async function connectDb() {
-  try {
-    if (pool) {
-      await pool.end().catch(() => { });
+// Lazy Pool and Client connection for Serverless & Local
+async function getClient() {
+  if (!pool) {
+    pool = createPool();
+  }
+  
+  const client = await pool.connect();
+  if (!schemaInitialized) {
+    try {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS app_collections (
+          collection_name VARCHAR(64) NOT NULL,
+          doc_id VARCHAR(128) NOT NULL,
+          data JSONB NOT NULL,
+          updated_at TIMESTAMPTZ DEFAULT NOW(),
+          PRIMARY KEY (collection_name, doc_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_collection_name ON app_collections(collection_name);
+        CREATE TABLE IF NOT EXISTS app_kv (
+          key VARCHAR(128) PRIMARY KEY,
+          value JSONB NOT NULL,
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+      schemaInitialized = true;
+      isDbConnected = true;
+      lastDbError = null;
+    } catch (e) {
+      console.warn('Schema check warning:', e.message);
     }
-    pool = createPool({});
+  }
+  return client;
+}
+
+// Initialize connection on startup
+(async () => {
+  try {
+    pool = createPool();
     await initDatabase(pool);
-    console.log('[Supabase Postgres] Connected to Supabase PostgreSQL at ' + (process.env.DB_HOST || 'aws-0-ap-southeast-1.pooler.supabase.com'));
+    console.log('[Supabase Postgres] Successfully connected to Supabase PostgreSQL at ' + (process.env.DB_HOST || 'aws-0-ap-southeast-1.pooler.supabase.com'));
   } catch (err) {
     isDbConnected = false;
     lastDbError = err.message;
-    console.warn('[Supabase Postgres] Database connection notice:', err.message);
+    console.warn('[Supabase Postgres] Startup connection notice:', err.message);
   }
-}
-
-connectDb();
+})();
 
 // ==================== REST API ENDPOINTS ====================
 
 // 1. Status Check
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
+  let connected = isDbConnected;
+  let testError = lastDbError;
+  try {
+    const client = await getClient();
+    client.release();
+    connected = true;
+    testError = null;
+  } catch (e) {
+    connected = false;
+    testError = e.message;
+  }
+
   res.json({
-    connected: isDbConnected,
+    connected,
     host: process.env.DB_HOST || 'aws-0-ap-southeast-1.pooler.supabase.com',
     port: process.env.DB_PORT || '5432',
     database: process.env.DB_NAME || 'postgres',
     user: process.env.DB_USER || 'postgres.rsaxtgzmyzinvyuimthi',
     hasPassword: Boolean(process.env.DB_PASSWORD),
     supabaseUrl: process.env.SUPABASE_URL || 'https://rsaxtgzmyzinvyuimthi.supabase.co',
-    error: lastDbError
+    cloudinaryCloud: process.env.CLOUDINARY_CLOUD_NAME || 'gehtqksm',
+    error: testError
   });
 });
 
@@ -119,33 +168,10 @@ app.post('/api/config', async (req, res) => {
   if (password !== undefined) process.env.DB_PASSWORD = password;
   if (supabaseUrl) process.env.SUPABASE_URL = supabaseUrl;
 
-  // Persist to .env file
-  try {
-    const envContent = [
-      `# Supabase PostgreSQL Database Configuration`,
-      `DB_HOST=${process.env.DB_HOST || 'aws-0-ap-southeast-1.pooler.supabase.com'}`,
-      `DB_PORT=${process.env.DB_PORT || '5432'}`,
-      `DB_NAME=${process.env.DB_NAME || 'postgres'}`,
-      `DB_USER=${process.env.DB_USER || 'postgres.rsaxtgzmyzinvyuimthi'}`,
-      `DB_PASSWORD=${process.env.DB_PASSWORD || ''}`,
-      `DB_SSL=true`,
-      ``,
-      `# Supabase API Configuration`,
-      `SUPABASE_URL=${process.env.SUPABASE_URL || 'https://rsaxtgzmyzinvyuimthi.supabase.co'}`,
-      `SUPABASE_ANON_KEY=${process.env.SUPABASE_ANON_KEY || ''}`,
-      ``,
-      `# Server Port`,
-      `PORT=${PORT}`
-    ].join('\n');
-
-    fs.writeFileSync(path.join(__dirname, '.env'), envContent, 'utf-8');
-  } catch (e) {
-    console.error('Failed to write .env:', e);
-  }
-
   try {
     if (pool) await pool.end().catch(() => { });
     pool = createPool({ host, port, database, user, password });
+    schemaInitialized = false;
     await initDatabase(pool);
     res.json({ success: true, message: 'Successfully connected to Supabase PostgreSQL!' });
   } catch (err) {
@@ -158,8 +184,7 @@ app.post('/api/config', async (req, res) => {
 // 3. Test Connection
 app.get('/api/test', async (req, res) => {
   try {
-    if (!pool) pool = createPool({});
-    const client = await pool.connect();
+    const client = await getClient();
     try {
       const result = await client.query('SELECT NOW() as now, version() as version;');
       isDbConnected = true;
@@ -175,19 +200,15 @@ app.get('/api/test', async (req, res) => {
   }
 });
 
-// 4. Push / Sync Entire Collection or Single Document
+// 4. Push / Sync Single Document
 app.post('/api/sync/doc', async (req, res) => {
   const { collectionName, docId, data } = req.body;
   if (!collectionName || !docId) {
     return res.status(400).json({ success: false, error: 'Missing collectionName or docId' });
   }
 
-  if (!isDbConnected || !pool) {
-    return res.status(503).json({ success: false, error: 'Database is not connected', lastError: lastDbError });
-  }
-
   try {
-    const client = await pool.connect();
+    const client = await getClient();
     try {
       await client.query(
         `INSERT INTO app_collections (collection_name, doc_id, data, updated_at)
@@ -201,6 +222,7 @@ app.post('/api/sync/doc', async (req, res) => {
       client.release();
     }
   } catch (err) {
+    console.error(`Error in /api/sync/doc (${collectionName}/${docId}):`, err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -212,12 +234,8 @@ app.post('/api/sync/delete', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing collectionName or docId' });
   }
 
-  if (!isDbConnected || !pool) {
-    return res.status(503).json({ success: false, error: 'Database is not connected' });
-  }
-
   try {
-    const client = await pool.connect();
+    const client = await getClient();
     try {
       await client.query(
         `DELETE FROM app_collections WHERE collection_name = $1 AND doc_id = $2;`,
@@ -228,6 +246,7 @@ app.post('/api/sync/delete', async (req, res) => {
       client.release();
     }
   } catch (err) {
+    console.error(`Error in /api/sync/delete (${collectionName}/${docId}):`, err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -239,12 +258,8 @@ app.post('/api/sync/collection', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Invalid payload' });
   }
 
-  if (!isDbConnected || !pool) {
-    return res.status(503).json({ success: false, error: 'Database is not connected', lastError: lastDbError });
-  }
-
   try {
-    const client = await pool.connect();
+    const client = await getClient();
     try {
       await client.query('BEGIN');
       for (const item of items) {
@@ -267,6 +282,7 @@ app.post('/api/sync/collection', async (req, res) => {
       client.release();
     }
   } catch (err) {
+    console.error(`Error in /api/sync/collection (${collectionName}):`, err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -275,12 +291,8 @@ app.post('/api/sync/collection', async (req, res) => {
 app.post('/api/sync/all', async (req, res) => {
   const { rooms, tenants, meter_readings, invoices, expenses, settings, users } = req.body;
 
-  if (!isDbConnected || !pool) {
-    return res.status(503).json({ success: false, error: 'Database is not connected', lastError: lastDbError });
-  }
-
   try {
-    const client = await pool.connect();
+    const client = await getClient();
     try {
       await client.query('BEGIN');
 
@@ -296,7 +308,7 @@ app.post('/api/sync/all', async (req, res) => {
       for (const col of collections) {
         if (Array.isArray(col.items)) {
           for (const item of col.items) {
-            if (item.id) {
+            if (item && item.id) {
               await client.query(
                 `INSERT INTO app_collections (collection_name, doc_id, data, updated_at)
                  VALUES ($1, $2, $3, NOW())
@@ -310,6 +322,13 @@ app.post('/api/sync/all', async (req, res) => {
       }
 
       if (settings) {
+        await client.query(
+          `INSERT INTO app_collections (collection_name, doc_id, data, updated_at)
+           VALUES ('settings', 'global_settings', $1, NOW())
+           ON CONFLICT (collection_name, doc_id)
+           DO UPDATE SET data = EXCLUDED.data, updated_at = NOW();`,
+          [JSON.stringify(settings)]
+        );
         await client.query(
           `INSERT INTO app_kv (key, value, updated_at)
            VALUES ('rental_settings', $1, NOW())
@@ -328,18 +347,15 @@ app.post('/api/sync/all', async (req, res) => {
       client.release();
     }
   } catch (err) {
+    console.error('Error in /api/sync/all:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 8. Pull / Fetch All Data from Supabase Postgres
+// 8. Pull / Fetch All Live Data from Supabase Postgres
 app.get('/api/pull/all', async (req, res) => {
-  if (!isDbConnected || !pool) {
-    return res.status(503).json({ success: false, error: 'Database is not connected', lastError: lastDbError });
-  }
-
   try {
-    const client = await pool.connect();
+    const client = await getClient();
     try {
       const colResult = await client.query('SELECT collection_name, doc_id, data FROM app_collections;');
       const kvResult = await client.query('SELECT key, value FROM app_kv;');
@@ -357,13 +373,16 @@ app.get('/api/pull/all', async (req, res) => {
       colResult.rows.forEach(row => {
         const item = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
         if (!item.id) item.id = row.doc_id;
-        if (result[row.collection_name]) {
+        
+        if (row.collection_name === 'settings' && row.doc_id === 'global_settings') {
+          result.settings = item;
+        } else if (result[row.collection_name]) {
           result[row.collection_name].push(item);
         }
       });
 
       kvResult.rows.forEach(row => {
-        if (row.key === 'rental_settings') {
+        if (row.key === 'rental_settings' && !result.settings) {
           result.settings = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
         }
       });
@@ -373,6 +392,7 @@ app.get('/api/pull/all', async (req, res) => {
       client.release();
     }
   } catch (err) {
+    console.error('Error in /api/pull/all:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -432,7 +452,7 @@ app.get('*', (req, res) => {
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`===================================================`);
-    console.log(`  Rental Room Management System`);
+    console.log(`  Rental Room Management System (Cloud-First)`);
     console.log(`  Local URL: http://localhost:${PORT}`);
     console.log(`  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME || 'gehtqksm'}`);
     console.log(`  Supabase Host: ${process.env.DB_HOST || 'aws-0-ap-southeast-1.pooler.supabase.com'}`);

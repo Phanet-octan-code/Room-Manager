@@ -25,45 +25,70 @@ export const DEFAULT_SETTINGS = {
 
 class Store {
   constructor() {
+    this.cache = {
+      rooms: [],
+      tenants: [],
+      meter_readings: [],
+      invoices: [],
+      expenses: [],
+      users: [],
+      settings: { ...DEFAULT_SETTINGS }
+    };
+    this.listeners = [];
     this.initData();
   }
 
-  // Initialize storage keys
+  // Initialize storage keys from local cache initially
   initData() {
-    if (!localStorage.getItem('rental_rooms')) {
-      localStorage.setItem('rental_rooms', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('rental_tenants')) {
-      localStorage.setItem('rental_tenants', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('rental_meter_readings')) {
-      localStorage.setItem('rental_meter_readings', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('rental_invoices')) {
-      localStorage.setItem('rental_invoices', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('rental_expenses')) {
-      localStorage.setItem('rental_expenses', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('rental_settings')) {
-      localStorage.setItem('rental_settings', JSON.stringify(DEFAULT_SETTINGS));
+    try {
+      const storedRooms = localStorage.getItem('rental_rooms');
+      if (storedRooms) this.cache.rooms = JSON.parse(storedRooms);
+
+      const storedTenants = localStorage.getItem('rental_tenants');
+      if (storedTenants) this.cache.tenants = JSON.parse(storedTenants);
+
+      const storedReadings = localStorage.getItem('rental_meter_readings');
+      if (storedReadings) this.cache.meter_readings = JSON.parse(storedReadings);
+
+      const storedInvoices = localStorage.getItem('rental_invoices');
+      if (storedInvoices) this.cache.invoices = JSON.parse(storedInvoices);
+
+      const storedExpenses = localStorage.getItem('rental_expenses');
+      if (storedExpenses) this.cache.expenses = JSON.parse(storedExpenses);
+
+      const storedUsers = localStorage.getItem('rental_users');
+      if (storedUsers) this.cache.users = JSON.parse(storedUsers);
+
+      const storedSettings = localStorage.getItem('rental_settings');
+      if (storedSettings) this.cache.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(storedSettings) };
+    } catch (e) {
+      console.warn('Cache load notice:', e);
     }
   }
 
-  get(key) {
-    try {
-      const data = localStorage.getItem(`rental_${key}`);
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      console.error(`Error reading ${key}:`, e);
-      return [];
+  subscribe(listener) {
+    if (typeof listener === 'function') {
+      this.listeners.push(listener);
     }
+  }
+
+  notifyListeners() {
+    this.listeners.forEach(fn => {
+      try { fn(this.cache); } catch (e) { console.error('Listener error:', e); }
+    });
+  }
+
+  get(key) {
+    if (key === 'settings') return this.cache.settings || DEFAULT_SETTINGS;
+    return this.cache[key] || [];
   }
 
   set(key, data) {
     try {
+      this.cache[key] = data;
       localStorage.setItem(`rental_${key}`, JSON.stringify(data));
       this.syncCollectionToSupabase(key, data);
+      this.notifyListeners();
       return true;
     } catch (e) {
       console.error(`Error saving ${key}:`, e);
@@ -79,7 +104,6 @@ class Store {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ collectionName, docId, data })
       });
-      console.log(`[Supabase] Document ${collectionName}/${docId} synced.`);
     } catch (err) {
       console.warn(`[Supabase write error] ${collectionName}/${docId}:`, err);
     }
@@ -93,7 +117,6 @@ class Store {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ collectionName, docId })
       });
-      console.log(`[Supabase] Document ${collectionName}/${docId} deleted.`);
     } catch (err) {
       console.warn(`[Supabase delete error] ${collectionName}/${docId}:`, err);
     }
@@ -154,13 +177,35 @@ class Store {
 
       if (result.success && result.data) {
         const d = result.data;
-        if (d.rooms && d.rooms.length) localStorage.setItem('rental_rooms', JSON.stringify(d.rooms));
-        if (d.tenants && d.tenants.length) localStorage.setItem('rental_tenants', JSON.stringify(d.tenants));
-        if (d.meter_readings && d.meter_readings.length) localStorage.setItem('rental_meter_readings', JSON.stringify(d.meter_readings));
-        if (d.invoices && d.invoices.length) localStorage.setItem('rental_invoices', JSON.stringify(d.invoices));
-        if (d.expenses && d.expenses.length) localStorage.setItem('rental_expenses', JSON.stringify(d.expenses));
-        if (d.users && d.users.length) localStorage.setItem('rental_users', JSON.stringify(d.users));
-        if (d.settings) localStorage.setItem('rental_settings', JSON.stringify(d.settings));
+        if (Array.isArray(d.rooms)) {
+          this.cache.rooms = d.rooms;
+          localStorage.setItem('rental_rooms', JSON.stringify(d.rooms));
+        }
+        if (Array.isArray(d.tenants)) {
+          this.cache.tenants = d.tenants;
+          localStorage.setItem('rental_tenants', JSON.stringify(d.tenants));
+        }
+        if (Array.isArray(d.meter_readings)) {
+          this.cache.meter_readings = d.meter_readings;
+          localStorage.setItem('rental_meter_readings', JSON.stringify(d.meter_readings));
+        }
+        if (Array.isArray(d.invoices)) {
+          this.cache.invoices = d.invoices;
+          localStorage.setItem('rental_invoices', JSON.stringify(d.invoices));
+        }
+        if (Array.isArray(d.expenses)) {
+          this.cache.expenses = d.expenses;
+          localStorage.setItem('rental_expenses', JSON.stringify(d.expenses));
+        }
+        if (Array.isArray(d.users) && d.users.length) {
+          this.cache.users = d.users;
+          localStorage.setItem('rental_users', JSON.stringify(d.users));
+        }
+        if (d.settings && typeof d.settings === 'object') {
+          this.cache.settings = { ...DEFAULT_SETTINGS, ...d.settings };
+          localStorage.setItem('rental_settings', JSON.stringify(this.cache.settings));
+        }
+        this.notifyListeners();
         return true;
       }
       return false;
@@ -172,17 +217,14 @@ class Store {
 
   // Settings
   getSettings() {
-    try {
-      const s = localStorage.getItem('rental_settings');
-      return s ? { ...DEFAULT_SETTINGS, ...JSON.parse(s) } : DEFAULT_SETTINGS;
-    } catch (e) {
-      return DEFAULT_SETTINGS;
-    }
+    return this.cache.settings || DEFAULT_SETTINGS;
   }
 
   saveSettings(settings) {
-    localStorage.setItem('rental_settings', JSON.stringify(settings));
-    this.writeDocToSupabase('settings', 'global_settings', settings);
+    this.cache.settings = { ...DEFAULT_SETTINGS, ...settings };
+    localStorage.setItem('rental_settings', JSON.stringify(this.cache.settings));
+    this.writeDocToSupabase('settings', 'global_settings', this.cache.settings);
+    this.notifyListeners();
   }
 
   // Rooms
@@ -198,12 +240,11 @@ class Store {
     const cleanNum = String(room.roomNumber || '').replace(/\s+/g, '');
     const newRoom = {
       id: `room_${cleanNum || Date.now()}`,
-      roomNumber: cleanNum || '101',
+      roomNumber: room.roomNumber,
       floor: parseInt(room.floor) || 1,
-      rent: parseFloat(room.rent || room.price) || 0,
-      price: parseFloat(room.price || room.rent) || 0,
-      deposit: parseFloat(room.deposit) || 0,
       roomType: room.roomType || 'fan',
+      price: parseFloat(room.price) || 50,
+      deposit: parseFloat(room.deposit) || 0,
       status: room.status || 'available',
       tenantId: room.tenantId || null,
       description: room.description || '',
@@ -217,22 +258,27 @@ class Store {
 
   updateRoom(id, updatedData) {
     let rooms = this.getRooms();
-    rooms = rooms.map(r => r.id === id ? {
-      ...r,
-      ...updatedData,
-      rent: updatedData.rent !== undefined ? updatedData.rent : (updatedData.price !== undefined ? updatedData.price : r.rent),
-      price: updatedData.price !== undefined ? updatedData.price : (updatedData.rent !== undefined ? updatedData.rent : r.price)
-    } : r);
+    rooms = rooms.map(r => r.id === id ? { ...r, ...updatedData } : r);
     this.saveRooms(rooms);
     const updated = rooms.find(r => r.id === id);
     if (updated) this.writeDocToSupabase('rooms', id, updated);
   }
 
   deleteRoom(id) {
-    let rooms = this.getRooms();
-    rooms = rooms.filter(r => r.id !== id);
+    const rooms = this.getRooms().filter(r => r.id !== id);
     this.saveRooms(rooms);
     this.deleteDocFromSupabase('rooms', id);
+
+    // Unassign room from tenant if assigned
+    const tenants = this.getTenants().map(t => {
+      if (t.roomId === id) {
+        const updated = { ...t, roomId: null };
+        this.writeDocToSupabase('tenants', t.id, updated);
+        return updated;
+      }
+      return t;
+    });
+    this.saveTenants(tenants);
   }
 
   // Tenants
@@ -300,9 +346,7 @@ class Store {
     if (tenant && tenant.roomId) {
       this.updateRoom(tenant.roomId, { status: 'available', tenantId: null });
     }
-    
-    let tenants = this.getTenants();
-    tenants = tenants.filter(t => t.id !== id);
+    const tenants = this.getTenants().filter(t => t.id !== id);
     this.saveTenants(tenants);
     this.deleteDocFromSupabase('tenants', id);
   }
@@ -311,54 +355,34 @@ class Store {
   getReadings() { return this.get('meter_readings'); }
   saveReadings(readings) { return this.set('meter_readings', readings); }
 
-  getReading(month, roomId) {
-    const readings = this.getReadings();
-    return readings.find(r => r.month === month && r.roomId === roomId);
+  getReadingForRoomMonth(roomId, month) {
+    return this.getReadings().find(r => r.roomId === roomId && r.month === month);
   }
 
-  saveReading(month, roomId, data) {
-    let readings = this.getReadings();
-    const settings = this.getSettings();
+  getPreviousReading(roomId, currentMonth) {
+    const readings = this.getReadings()
+      .filter(r => r.roomId === roomId && r.month < currentMonth)
+      .sort((a, b) => b.month.localeCompare(a.month));
+    return readings[0] || null;
+  }
 
-    const waterOld = data.waterOld !== undefined ? data.waterOld : (data.oldWater || 0);
-    const waterNew = data.waterNew !== undefined ? data.waterNew : (data.newWater || waterOld);
-    const electricityOld = data.electricityOld !== undefined ? data.electricityOld : (data.oldElectric || 0);
-    const electricityNew = data.electricityNew !== undefined ? data.electricityNew : (data.newElectric || electricityOld);
-
-    const waterUsage = Math.max(0, waterNew - waterOld);
-    const electricUsage = Math.max(0, electricityNew - electricityOld);
-    const waterAmount = waterUsage * (settings.waterRate || 2200);
-    const electricityAmount = electricUsage * (settings.electricityRate || 1000);
-
-    const cleanId = `reading_${month.replace('-', '')}_${roomId}`;
-
-    const entry = {
-      id: cleanId,
-      roomId,
-      month,
-      waterOld,
-      waterNew,
-      oldWater: waterOld,
-      newWater: waterNew,
-      waterUsage,
-      waterAmount,
-      electricityOld,
-      electricityNew,
-      oldElectric: electricityOld,
-      newElectric: electricityNew,
-      electricUsage,
-      electricityAmount,
-      updatedAt: new Date().toISOString()
-    };
-
-    const idx = readings.findIndex(r => r.month === month && r.roomId === roomId);
+  saveReading(reading) {
+    const readings = this.getReadings();
+    const idx = readings.findIndex(r => r.roomId === reading.roomId && r.month === reading.month);
+    let readingDoc;
     if (idx >= 0) {
-      readings[idx] = { ...readings[idx], ...entry };
+      readings[idx] = { ...readings[idx], ...reading, updatedAt: new Date().toISOString() };
+      readingDoc = readings[idx];
     } else {
-      readings.push(entry);
+      readingDoc = {
+        id: `reading_${reading.roomId}_${reading.month}`,
+        ...reading,
+        createdAt: new Date().toISOString()
+      };
+      readings.push(readingDoc);
     }
     this.saveReadings(readings);
-    this.writeDocToSupabase('meter_readings', entry.id, entry);
+    this.writeDocToSupabase('meter_readings', readingDoc.id, readingDoc);
   }
 
   // Invoices
@@ -366,121 +390,151 @@ class Store {
   saveInvoices(invoices) { return this.set('invoices', invoices); }
 
   getInvoiceById(id) {
-    return this.getInvoices().find(inv => inv.id === id);
+    return this.getInvoices().find(i => i.id === id);
   }
 
-  addOrUpdateInvoice(invoiceData) {
-    let invoices = this.getInvoices();
+  addInvoice(invoice) {
+    const invoices = this.getInvoices();
     const count = invoices.length + 1;
-    const invoiceId = invoiceData.id || `invoice_${String(count).padStart(3, '0')}`;
-
-    const fullDoc = {
-      id: invoiceId,
-      createdAt: new Date().toISOString(),
-      ...invoiceData
+    const padCount = String(count).padStart(4, '0');
+    const monthClean = (invoice.month || new Date().toISOString().slice(0, 7)).replace('-', '');
+    const newInvoice = {
+      id: `inv_${Date.now()}_${padCount}`,
+      invoiceNumber: `INV-${monthClean}-${padCount}`,
+      roomId: invoice.roomId,
+      roomNumber: invoice.roomNumber,
+      tenantName: invoice.tenantName,
+      tenantPhone: invoice.tenantPhone,
+      month: invoice.month,
+      startDate: invoice.startDate,
+      paymentDate: invoice.paymentDate,
+      roomCostUsd: parseFloat(invoice.roomCostUsd) || 0,
+      roomCostKhr: parseFloat(invoice.roomCostKhr) || 0,
+      elecOld: parseFloat(invoice.elecOld) || 0,
+      elecNew: parseFloat(invoice.elecNew) || 0,
+      elecUsage: parseFloat(invoice.elecUsage) || 0,
+      elecRate: parseFloat(invoice.elecRate) || 1000,
+      elecCostKhr: parseFloat(invoice.elecCostKhr) || 0,
+      waterOld: parseFloat(invoice.waterOld) || 0,
+      waterNew: parseFloat(invoice.waterNew) || 0,
+      waterUsage: parseFloat(invoice.waterUsage) || 0,
+      waterRate: parseFloat(invoice.waterRate) || 2200,
+      waterCostKhr: parseFloat(invoice.waterCostKhr) || 0,
+      trashFeeKhr: parseFloat(invoice.trashFeeKhr) || 0,
+      wifiFeeKhr: parseFloat(invoice.wifiFeeKhr) || 0,
+      otherFeeKhr: parseFloat(invoice.otherFeeKhr) || 0,
+      otherFeeNote: invoice.otherFeeNote || '',
+      subtotalKhr: parseFloat(invoice.subtotalKhr) || 0,
+      exchangeRate: parseFloat(invoice.exchangeRate) || 4000,
+      totalUsd: parseFloat(invoice.totalUsd) || 0,
+      totalKhr: parseFloat(invoice.totalKhr) || 0,
+      status: invoice.status || 'unpaid',
+      paidDate: invoice.status === 'paid' ? new Date().toISOString() : null,
+      paidAmount: invoice.status === 'paid' ? (parseFloat(invoice.totalUsd) || 0) : 0,
+      note: invoice.note || '',
+      createdAt: new Date().toISOString()
     };
-
-    const idx = invoices.findIndex(i => i.id === invoiceId);
-    if (idx >= 0) {
-      invoices[idx] = { ...invoices[idx], ...fullDoc, updatedAt: new Date().toISOString() };
-    } else {
-      invoices.push(fullDoc);
-    }
+    invoices.unshift(newInvoice);
     this.saveInvoices(invoices);
-    this.writeDocToSupabase('invoices', invoiceId, fullDoc);
+    this.writeDocToSupabase('invoices', newInvoice.id, newInvoice);
+    return newInvoice;
   }
 
-  deleteInvoice(id) {
+  updateInvoice(id, updatedData) {
     let invoices = this.getInvoices();
-    invoices = invoices.filter(i => i.id !== id);
-    this.saveInvoices(invoices);
-    this.deleteDocFromSupabase('invoices', id);
-  }
-
-  updateInvoicePayment(id, status, paidAmount = null) {
-    let invoices = this.getInvoices();
-    invoices = invoices.map(inv => {
-      if (inv.id === id) {
-        return {
-          ...inv,
-          status,
-          paidAmount: status === 'paid' ? (inv.totalUsd || inv.totalKhr) : (paidAmount !== null ? paidAmount : inv.paidAmount),
-          paidDate: status === 'paid' ? new Date().toISOString() : null
-        };
-      }
-      return inv;
-    });
+    invoices = invoices.map(inv => inv.id === id ? { ...inv, ...updatedData } : inv);
     this.saveInvoices(invoices);
     const updated = invoices.find(i => i.id === id);
     if (updated) this.writeDocToSupabase('invoices', id, updated);
+  }
+
+  updateInvoicePayment(id, status, paidAmount = null) {
+    const invoice = this.getInvoiceById(id);
+    if (!invoice) return;
+    const amount = paidAmount !== null ? paidAmount : invoice.totalUsd;
+    const updated = {
+      ...invoice,
+      status,
+      paidAmount: status === 'paid' ? amount : (status === 'partial' ? amount : 0),
+      paidDate: status === 'paid' ? new Date().toISOString() : null
+    };
+    this.updateInvoice(id, updated);
+  }
+
+  deleteInvoice(id) {
+    const invoices = this.getInvoices().filter(i => i.id !== id);
+    this.saveInvoices(invoices);
+    this.deleteDocFromSupabase('invoices', id);
   }
 
   // Expenses
   getExpenses() { return this.get('expenses'); }
   saveExpenses(expenses) { return this.set('expenses', expenses); }
 
-  addExpense(exp) {
+  addExpense(expense) {
     const expenses = this.getExpenses();
-    const count = expenses.length + 1;
-    const newExp = {
-      id: `exp_${String(count).padStart(3, '0')}`,
-      createdAt: new Date().toISOString(),
-      ...exp
+    const newExpense = {
+      id: `exp_${Date.now()}`,
+      category: expense.category || 'other',
+      description: expense.description || '',
+      amountUsd: parseFloat(expense.amountUsd) || 0,
+      amountKhr: parseFloat(expense.amountKhr) || 0,
+      date: expense.date || new Date().toISOString().split('T')[0],
+      receiptUrl: expense.receiptUrl || '',
+      createdAt: new Date().toISOString()
     };
-    expenses.push(newExp);
+    expenses.unshift(newExpense);
     this.saveExpenses(expenses);
-    this.writeDocToSupabase('expenses', newExp.id, newExp);
-    return newExp;
+    this.writeDocToSupabase('expenses', newExpense.id, newExpense);
+    return newExpense;
   }
 
   deleteExpense(id) {
-    let expenses = this.getExpenses();
-    expenses = expenses.filter(e => e.id !== id);
+    const expenses = this.getExpenses().filter(e => e.id !== id);
     this.saveExpenses(expenses);
     this.deleteDocFromSupabase('expenses', id);
   }
 
-  // Backup & Restore
-  exportBackup() {
-    const backup = {
-      version: '3.0',
-      databaseEngine: 'Supabase PostgreSQL',
-      supabaseProject: 'rsaxtgzmyzinvyuimthi',
-      supabaseHost: 'aws-0-ap-southeast-1.pooler.supabase.com',
-      exportedAt: new Date().toISOString(),
-      rooms: this.getRooms(),
-      tenants: this.getTenants(),
-      meter_readings: this.getReadings(),
-      invoices: this.getInvoices(),
-      expenses: this.getExpenses(),
-      settings: this.getSettings()
+  // Dashboard Aggregates
+  getDashboardStats() {
+    const rooms = this.getRooms();
+    const tenants = this.getTenants();
+    const invoices = this.getInvoices();
+    const settings = this.getSettings();
+
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    const totalRooms = rooms.length;
+    const occupiedRooms = rooms.filter(r => r.status === 'occupied').length;
+    const availableRooms = rooms.filter(r => r.status === 'available').length;
+    const maintenanceRooms = rooms.filter(r => r.status === 'maintenance').length;
+    const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+
+    const currentMonthInvoices = invoices.filter(i => i.month === currentMonth);
+    const unpaidInvoices = invoices.filter(i => i.status === 'unpaid' || i.status === 'partial');
+
+    const monthlyExpectedUsd = currentMonthInvoices.reduce((sum, i) => sum + (parseFloat(i.totalUsd) || 0), 0);
+    const monthlyCollectedUsd = currentMonthInvoices
+      .filter(i => i.status === 'paid')
+      .reduce((sum, i) => sum + (parseFloat(i.totalUsd) || 0), 0);
+
+    const unpaidTotalUsd = unpaidInvoices.reduce((sum, i) => sum + (parseFloat(i.totalUsd) || 0), 0);
+    const unpaidTotalKhr = unpaidInvoices.reduce((sum, i) => sum + (parseFloat(i.totalKhr) || 0), 0);
+
+    return {
+      totalRooms,
+      occupiedRooms,
+      availableRooms,
+      maintenanceRooms,
+      occupancyRate,
+      totalTenants: tenants.filter(t => (t.status || 'active') === 'active').length,
+      monthlyExpectedUsd,
+      monthlyCollectedUsd,
+      unpaidInvoicesCount: unpaidInvoices.length,
+      unpaidTotalUsd,
+      unpaidTotalKhr,
+      exchangeRate: settings.exchangeRate || 4000
     };
-    return JSON.stringify(backup, null, 2);
-  }
-
-  importBackup(jsonString) {
-    try {
-      const data = JSON.parse(jsonString);
-      if (data.rooms) this.saveRooms(data.rooms);
-      if (data.tenants) this.saveTenants(data.tenants);
-      if (data.meter_readings || data.readings) this.saveReadings(data.meter_readings || data.readings);
-      if (data.invoices) this.saveInvoices(data.invoices);
-      if (data.expenses) this.saveExpenses(data.expenses);
-      if (data.settings) this.saveSettings(data.settings);
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  }
-
-  resetToDefault() {
-    localStorage.setItem('rental_rooms', JSON.stringify([]));
-    localStorage.setItem('rental_tenants', JSON.stringify([]));
-    localStorage.setItem('rental_meter_readings', JSON.stringify([]));
-    localStorage.setItem('rental_invoices', JSON.stringify([]));
-    localStorage.setItem('rental_expenses', JSON.stringify([]));
-    localStorage.setItem('rental_settings', JSON.stringify(DEFAULT_SETTINGS));
-    this.pushAllToSupabase();
   }
 }
 

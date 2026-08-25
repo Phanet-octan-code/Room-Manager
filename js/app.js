@@ -393,15 +393,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchTab('dashboard');
   }
 
-  // Check Supabase connection in background and auto-sync live data from Supabase
-  initializeSupabase().then(async supaResult => {
+  // Check Supabase connection and pull live cloud data on startup
+  try {
+    const supaResult = await initializeSupabase();
     updateSupabaseBadge(supaResult && supaResult.connected);
     if (supaResult && supaResult.connected) {
       await store.loadFromSupabase();
-      console.log('✓ Auto-synced all live data (including Users & Admin) from Supabase.');
+      console.log('✓ Auto-synced all live data from Supabase Cloud.');
+      if (isAuthenticated) {
+        updateDashboardStats();
+        renderRooms();
+        renderTenants();
+      }
     }
-  }).catch(err => {
-    console.warn('Supabase status check:', err);
+  } catch (err) {
+    console.warn('Supabase startup check notice:', err);
     updateSupabaseBadge(false);
-  });
+  }
 });
