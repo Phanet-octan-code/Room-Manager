@@ -135,6 +135,7 @@ class Store {
 
   // Write single document directly to Supabase
   async writeDocToSupabase(collectionName, docId, data) {
+    if (!isSupabaseConnected()) return;
     try {
       await fetch('/api/sync/doc', {
         method: 'POST',
@@ -142,12 +143,13 @@ class Store {
         body: JSON.stringify({ collectionName, docId, data })
       });
     } catch (err) {
-      console.warn(`[Supabase write error] ${collectionName}/${docId}:`, err);
+      // Silently ignore when backend is not active
     }
   }
 
   // Delete document directly from Supabase
   async deleteDocFromSupabase(collectionName, docId) {
+    if (!isSupabaseConnected()) return;
     try {
       await fetch('/api/sync/delete', {
         method: 'POST',
@@ -155,12 +157,13 @@ class Store {
         body: JSON.stringify({ collectionName, docId })
       });
     } catch (err) {
-      console.warn(`[Supabase delete error] ${collectionName}/${docId}:`, err);
+      // Silently ignore when backend is not active
     }
   }
 
   // Bulk sync collection to Supabase
   async syncCollectionToSupabase(collectionName, data) {
+    if (!isSupabaseConnected()) return;
     try {
       if (Array.isArray(data)) {
         await fetch('/api/sync/collection', {
@@ -176,7 +179,7 @@ class Store {
         });
       }
     } catch (err) {
-      console.warn(`[Supabase collection sync error] ${collectionName}:`, err);
+      // Silently ignore when backend is not active
     }
   }
 

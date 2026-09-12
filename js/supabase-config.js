@@ -15,9 +15,14 @@ let currentDbInfo = null;
 
 // Initialize & Check Supabase Connection Status
 export async function initializeSupabase() {
+  // On static hosts (e.g. GitHub Pages) where there is no Node API server, skip /api/status quietly
+  if (typeof window !== 'undefined' && (window.location.hostname.includes('github.io') || window.location.protocol === 'file:')) {
+    isConnected = false;
+    return { success: false, connected: false, error: 'Static host - Firebase cloud mode' };
+  }
   try {
-    const res = await fetch('/api/status');
-    if (!res.ok) {
+    const res = await fetch('/api/status').catch(() => null);
+    if (!res || !res.ok) {
       isConnected = false;
       return { success: false, error: 'Server status check failed' };
     }
@@ -27,8 +32,6 @@ export async function initializeSupabase() {
     
     if (isConnected) {
       console.log('✓ Supabase PostgreSQL connected successfully at', data.host);
-    } else {
-      console.log('ℹ Supabase PostgreSQL status: standby / password pending');
     }
 
     return { 
@@ -38,7 +41,6 @@ export async function initializeSupabase() {
       error: data.error 
     };
   } catch (error) {
-    console.warn('Supabase status check warning:', error.message);
     isConnected = false;
     return { success: false, error: error.message };
   }

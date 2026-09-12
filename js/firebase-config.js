@@ -164,10 +164,10 @@ export async function testFirebaseConnection() {
       message: 'Firebase Firestore បានភ្ជាប់ និងអាច Read/Write បានជោគជ័យ!'
     };
   } catch (err) {
-    console.warn('[Firebase Connection Test]', err);
-    lastError = err.message;
+    console.warn('[Firebase Connection Test]', err.message || err);
+    lastError = err.message || String(err);
 
-    if (err.code === 'permission-denied' || String(err).includes('permission-denied') || String(err).includes('PERMISSION_DENIED')) {
+    if (err.code === 'permission-denied' || String(err).toLowerCase().includes('permission')) {
       // Database exists but rules block read/write
       isConnected = false;
       rulesWarning = true;
@@ -225,9 +225,12 @@ export async function writeDocToFirebase(collectionName, docId, data) {
     rulesWarning = false;
     return { success: true };
   } catch (err) {
-    console.warn(`[Firebase writeDoc error] ${collectionName}/${docId}:`, err);
-    if (err.code === 'permission-denied') {
+    const isPermission = err.code === 'permission-denied' || String(err).toLowerCase().includes('permission');
+    if (isPermission) {
       rulesWarning = true;
+      console.warn(`[Firebase Permission Denied] Firestore Security Rules need to be updated in Firebase Console.`);
+    } else {
+      console.warn(`[Firebase writeDoc error] ${collectionName}/${docId}:`, err);
     }
     return { success: false, error: err.message, code: err.code };
   }
@@ -245,9 +248,12 @@ export async function deleteDocFromFirebase(collectionName, docId) {
     await deleteDoc(docRef);
     return { success: true };
   } catch (err) {
-    console.warn(`[Firebase deleteDoc error] ${collectionName}/${docId}:`, err);
-    if (err.code === 'permission-denied') {
+    const isPermission = err.code === 'permission-denied' || String(err).toLowerCase().includes('permission');
+    if (isPermission) {
       rulesWarning = true;
+      console.warn(`[Firebase Permission Denied] Firestore Security Rules need to be updated in Firebase Console.`);
+    } else {
+      console.warn(`[Firebase deleteDoc error] ${collectionName}/${docId}:`, err);
     }
     return { success: false, error: err.message, code: err.code };
   }
@@ -290,8 +296,13 @@ export async function syncCollectionToFirebase(collectionName, items) {
     rulesWarning = false;
     return { success: true, count: items.length };
   } catch (err) {
-    console.warn(`[Firebase syncCollection error] ${collectionName}:`, err);
-    if (err.code === 'permission-denied') rulesWarning = true;
+    const isPermission = err.code === 'permission-denied' || String(err).toLowerCase().includes('permission');
+    if (isPermission) {
+      rulesWarning = true;
+      console.warn(`[Firebase Permission Denied] Firestore Security Rules need to be updated in Firebase Console for ${collectionName}.`);
+    } else {
+      console.warn(`[Firebase syncCollection error] ${collectionName}:`, err);
+    }
     return { success: false, error: err.message, code: err.code };
   }
 }
