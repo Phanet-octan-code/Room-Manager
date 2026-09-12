@@ -107,12 +107,14 @@ export async function handleLoginSubmit(e) {
     e.preventDefault();
     e.stopPropagation();
   }
-  let identifier = document.getElementById('login-username')?.value;
+  let identifier = document.getElementById('login-username')?.value?.trim();
   let password = document.getElementById('login-password')?.value;
   const remember = document.getElementById('login-remember')?.checked;
 
-  if (!identifier) identifier = 'admin';
-  if (!password) password = 'Octan953149';
+  if (!identifier || !password) {
+    showToast('សូមបញ្ចូលឈ្មោះអ្នកប្រើ និងពាក្យសម្ងាត់!', 'warning');
+    return { success: false, error: 'missing_fields' };
+  }
 
   // 1. First attempt login with current storage
   let result = loginUser(identifier, password, remember);
