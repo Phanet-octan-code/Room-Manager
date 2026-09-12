@@ -227,6 +227,15 @@ export function updateFirebaseBadge(connected, rulesWarning = false) {
       tag.innerHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Standby</span>`;
     }
   }
+
+  const rulesBanner = document.getElementById('firebase-rules-banner');
+  if (rulesBanner) {
+    if (rulesWarning) {
+      rulesBanner.classList.remove('hidden');
+    } else {
+      rulesBanner.classList.add('hidden');
+    }
+  }
 }
 
 export function copyFirestoreRules() {

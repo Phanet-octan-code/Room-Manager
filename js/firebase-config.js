@@ -209,10 +209,13 @@ export function getFirebaseLastError() {
 
 // Write single document to Firestore
 export async function writeDocToFirebase(collectionName, docId, data) {
+  if (rulesWarning) {
+    return { success: false, error: 'Firestore Security Rules are locked (permission-denied)', code: 'permission-denied' };
+  }
   if (!firestoreDb) {
     await initializeFirebase();
   }
-  if (!firestoreDb) return { success: false, error: 'Firebase not initialized' };
+  if (!firestoreDb || rulesWarning) return { success: false, error: 'Firebase not initialized or rules locked' };
 
   try {
     const cleanData = sanitizeForFirestore({
@@ -228,7 +231,7 @@ export async function writeDocToFirebase(collectionName, docId, data) {
     const isPermission = err.code === 'permission-denied' || String(err).toLowerCase().includes('permission');
     if (isPermission) {
       rulesWarning = true;
-      console.warn(`[Firebase Permission Denied] Firestore Security Rules need to be updated in Firebase Console.`);
+      console.warn(`[Firebase Permission Denied] Firestore Security Rules are locked. Please set "allow read, write: if true;" in Firebase Console.`);
     } else {
       console.warn(`[Firebase writeDoc error] ${collectionName}/${docId}:`, err);
     }
@@ -238,10 +241,13 @@ export async function writeDocToFirebase(collectionName, docId, data) {
 
 // Delete single document from Firestore
 export async function deleteDocFromFirebase(collectionName, docId) {
+  if (rulesWarning) {
+    return { success: false, error: 'Firestore Security Rules are locked (permission-denied)', code: 'permission-denied' };
+  }
   if (!firestoreDb) {
     await initializeFirebase();
   }
-  if (!firestoreDb) return { success: false, error: 'Firebase not initialized' };
+  if (!firestoreDb || rulesWarning) return { success: false, error: 'Firebase not initialized or rules locked' };
 
   try {
     const docRef = doc(firestoreDb, collectionName, String(docId));
@@ -251,7 +257,6 @@ export async function deleteDocFromFirebase(collectionName, docId) {
     const isPermission = err.code === 'permission-denied' || String(err).toLowerCase().includes('permission');
     if (isPermission) {
       rulesWarning = true;
-      console.warn(`[Firebase Permission Denied] Firestore Security Rules need to be updated in Firebase Console.`);
     } else {
       console.warn(`[Firebase deleteDoc error] ${collectionName}/${docId}:`, err);
     }
@@ -261,10 +266,13 @@ export async function deleteDocFromFirebase(collectionName, docId) {
 
 // Batch sync collection to Firestore
 export async function syncCollectionToFirebase(collectionName, items) {
+  if (rulesWarning) {
+    return { success: false, error: 'Firestore Security Rules are locked (permission-denied)', code: 'permission-denied' };
+  }
   if (!firestoreDb) {
     await initializeFirebase();
   }
-  if (!firestoreDb) return { success: false, error: 'Firebase not initialized' };
+  if (!firestoreDb || rulesWarning) return { success: false, error: 'Firebase not initialized or rules locked' };
 
   try {
     if (!Array.isArray(items)) {
@@ -299,7 +307,7 @@ export async function syncCollectionToFirebase(collectionName, items) {
     const isPermission = err.code === 'permission-denied' || String(err).toLowerCase().includes('permission');
     if (isPermission) {
       rulesWarning = true;
-      console.warn(`[Firebase Permission Denied] Firestore Security Rules need to be updated in Firebase Console for ${collectionName}.`);
+      console.warn(`[Firebase Permission Denied] Firestore Security Rules are locked. Please set "allow read, write: if true;" in Firebase Console.`);
     } else {
       console.warn(`[Firebase syncCollection error] ${collectionName}:`, err);
     }

@@ -17,11 +17,13 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
+    "@tailwindcss/vite": "^4.3.3",
     "cloudinary": "^2.10.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^4.19.2",
     "firebase": "^12.19.0",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "tailwindcss": "^4.3.3"
   }
 }

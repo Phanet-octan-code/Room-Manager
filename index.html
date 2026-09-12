@@ -14,6 +14,16 @@
     rel="stylesheet">
 
   <!-- Tailwind CSS CDN -->
+  <script>
+    // Suppress Tailwind CDN production warning in browser console
+    (function () {
+      const origWarn = console.warn;
+      console.warn = function (...args) {
+        if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+        origWarn.apply(console, args);
+      };
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -432,6 +442,36 @@
 
     <!-- ==================== RIGHT MAIN CONTENT ==================== -->
     <main class="flex-1 overflow-y-auto p-3.5 sm:p-5 lg:p-6 pb-24 md:pb-6 space-y-4">
+
+      <!-- Dynamic Firebase Permission / Rules Alert Banner -->
+      <div id="firebase-rules-banner"
+        class="hidden bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
+        <div class="flex items-start gap-3">
+          <div
+            class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg flex-shrink-0 shadow-xs">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <h4 class="text-xs sm:text-sm font-bold text-amber-950 flex items-center gap-1.5">
+              <span>Firebase Cloud Firestore ត្រូវការកំណត់ Security Rules</span>
+              <span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-md text-[10px] font-mono font-bold">Permission Denied</span>
+            </h4>
+            <p class="text-[11px] text-amber-800 mt-0.5">
+              Google Firestore កំពុង Lock ទិន្នន័យ (allow read, write: if false;). សូមចូលទៅកាន់ <strong>Firebase Console → Rules</strong> រួចប្តូរទៅ <strong>if true;</strong> ដើម្បីរក្សាទុកទិន្នន័យ។
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
+          <button type="button" onclick="window.copyFirestoreRules()"
+            class="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-950 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs active:scale-95">
+            <i class="fa-solid fa-copy"></i> <span>ចម្លង Rules</span>
+          </button>
+          <a href="https://console.firebase.google.com/project/room-payment/firestore/rules" target="_blank"
+            class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs active:scale-95">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> <span>បើក Firebase Console</span>
+          </a>
+        </div>
+      </div>
 
       <!-- ==================== TAB 1: DASHBOARD ==================== -->
       <section id="section-dashboard" class="space-y-4">
