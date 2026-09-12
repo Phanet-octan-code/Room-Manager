@@ -308,24 +308,24 @@ export function openCreateInvoiceModal(roomId = null) {
   let options = '<option value="">-- សូមជ្រើសរើសបន្ទប់ --</option>';
   rooms.forEach(r => {
     const cleanRoomNum = (r.roomNumber || '').replace(/^room[-_]?/i, '') || r.roomNumber;
-    options += `<option value="${r.id}" ${roomId === r.id ? 'selected' : ''}>បន្ទប់ ${cleanRoomNum} (ថ្លៃឈ្នួល $${r.price}/ខែ)</option>`;
+    const tenant = store.getTenantForRoom(r.id);
+    const tenantSuffix = tenant ? ` - ${tenant.name}` : ' (ទំនេរ)';
+    options += `<option value="${r.id}" ${roomId === r.id ? 'selected' : ''}>បន្ទប់ ${cleanRoomNum}${tenantSuffix} (ថ្លៃឈ្នួល $${r.price}/ខែ)</option>`;
   });
   roomSelect.innerHTML = options;
 
-  // Set initial dates (+1 Month Auto Calculation)
-  const startDateInput = document.getElementById('inv-start-date');
-  const paymentDateInput = document.getElementById('inv-payment-date');
-  const todayStr = new Date().toISOString().split('T')[0];
-  if (startDateInput) {
-    startDateInput.value = todayStr;
-  }
-  if (paymentDateInput && startDateInput) {
-    paymentDateInput.value = addOneMonthToDate(startDateInput.value);
-  }
-  updateKhmerPeriodPreview();
-
   if (roomId) {
+    roomSelect.value = roomId;
     calculateInvoiceForm();
+  } else {
+    // If only one room exists, auto-select it
+    if (rooms.length === 1) {
+      roomSelect.value = rooms[0].id;
+      calculateInvoiceForm();
+    } else {
+      // Clear tenant fields until a room is chosen
+      calculateInvoiceForm();
+    }
   }
 
   modal.classList.remove('hidden');
@@ -337,21 +337,62 @@ export function closeCreateInvoiceModal() {
 }
 
 export function calculateInvoiceForm() {
-  const roomId = document.getElementById('inv-create-room').value;
-  const month = document.getElementById('inv-create-month').value;
-  if (!roomId || !month) return;
+  const roomSelect = document.getElementById('inv-create-room');
+  const monthInput = document.getElementById('inv-create-month');
+  if (!roomSelect) return;
 
-  const room = store.getRoomById(roomId);
-  const tenant = store.getTenants().find(t => t.id === (room ? room.tenantId : null));
-  const settings = store.getSettings();
-  const reading = store.getReading(month, roomId) || {};
+  const roomId = roomSelect.value;
+  const month = monthInput?.value || new Date().toISOString().substring(0, 7);
 
-  document.getElementById('inv-tenant-name').value = tenant ? tenant.name : '';
-  document.getElementById('inv-tenant-phone').value = tenant ? tenant.phone : '';
-
-  // Dates: Day Login (Start Date) and Day Payment (+1 Month Auto Calculate)
+  const tenantNameInput = document.getElementById('inv-tenant-name');
+  const tenantPhoneInput = document.getElementById('inv-tenant-phone');
+  const roomUsdInput = document.getElementById('inv-room-usd');
+  const roomKhrInput = document.getElementById('inv-room-khr');
   const startDateInput = document.getElementById('inv-start-date');
   const paymentDateInput = document.getElementById('inv-payment-date');
+
+  // If no room selected, clear fields
+  if (!roomId) {
+    if (tenantNameInput) {
+      tenantNameInput.value = '';
+      tenantNameInput.placeholder = 'សូមជ្រើសរើសបន្ទប់ជាមុនសិន';
+    }
+    const autoTag = document.getElementById('inv-tenant-auto-tag');
+    if (autoTag) autoTag.classList.add('hidden');
+    if (tenantPhoneInput) {
+      tenantPhoneInput.value = '';
+      tenantPhoneInput.placeholder = '';
+    }
+    if (roomUsdInput) roomUsdInput.value = '';
+    if (roomKhrInput) roomKhrInput.value = '';
+    recalcInvoiceGrandTotal();
+    return;
+  }
+
+  const room = store.getRoomById(roomId);
+  const tenant = store.getTenantForRoom(roomId);
+  const settings = store.getSettings();
+  const exchangeRate = settings.exchangeRate || 4000;
+
+  // 1. Auto Catch Tenant Information
+  const autoTag = document.getElementById('inv-tenant-auto-tag');
+  if (autoTag) {
+    if (tenant) {
+      autoTag.classList.remove('hidden');
+    } else {
+      autoTag.classList.add('hidden');
+    }
+  }
+  if (tenantNameInput) {
+    tenantNameInput.value = tenant ? tenant.name : '';
+    tenantNameInput.placeholder = tenant ? '' : 'មិនទាន់មានអ្នកជួល (អាចវាយបញ្ចូលដោយដៃ)';
+  }
+  if (tenantPhoneInput) {
+    tenantPhoneInput.value = tenant ? tenant.phone : '';
+    tenantPhoneInput.placeholder = tenant ? '' : 'លេខទូរស័ព្ទ...';
+  }
+
+  // 2. Dates: Day Login (Start Date) and Day Payment (+1 Month Auto Calculate)
   if (startDateInput) {
     startDateInput.value = tenant?.startDate || `${month}-01`;
   }
@@ -360,43 +401,75 @@ export function calculateInvoiceForm() {
   }
   updateKhmerPeriodPreview();
 
-  // House Fee (Room Rent in USD)
-  const roomPriceUsd = room ? room.price : 70;
-  const roomPriceKhr = Math.round(roomPriceUsd * (settings.exchangeRate || 4100));
-  document.getElementById('inv-room-usd').value = roomPriceUsd;
-  document.getElementById('inv-room-khr').value = roomPriceKhr;
+  // 3. Auto Catch Room Rent (USD & KHR)
+  const roomPriceUsd = room ? (parseFloat(room.price) || 0) : 0;
+  const roomPriceKhr = Math.round(roomPriceUsd * exchangeRate);
+  if (roomUsdInput) roomUsdInput.value = roomPriceUsd || '';
+  if (roomKhrInput) roomKhrInput.value = roomPriceKhr || '';
 
-  // Electricity
-  const oldElec = reading.oldElectric !== undefined ? reading.oldElectric : 2007;
-  const newElec = reading.newElectric !== undefined ? reading.newElectric : 2085;
+  // 4. Auto Catch Utilities (Electricity & Water)
+  const reading = (typeof store.getReadingForRoomMonth === 'function' 
+    ? store.getReadingForRoomMonth(roomId, month) 
+    : (typeof store.getReading === 'function' ? store.getReading(month, roomId) : null)) || {};
+  const prevReading = (typeof store.getPreviousReading === 'function'
+    ? store.getPreviousReading(roomId, month)
+    : null) || {};
+
+  const oldElec = reading.oldElectric !== undefined 
+    ? reading.oldElectric 
+    : (prevReading.newElectric !== undefined ? prevReading.newElectric : 0);
+  const newElec = reading.newElectric !== undefined 
+    ? reading.newElectric 
+    : oldElec;
+  const elecRate = settings.electricityRate || 1000;
   const elecUsage = Math.max(0, newElec - oldElec);
-  const elecTotal = elecUsage * settings.electricityRate;
+  const elecTotal = elecUsage * elecRate;
 
-  document.getElementById('inv-elec-old').value = oldElec;
-  document.getElementById('inv-elec-new').value = newElec;
-  document.getElementById('inv-elec-rate').value = settings.electricityRate;
-  document.getElementById('inv-elec-usage').innerText = elecUsage;
-  document.getElementById('inv-elec-total').innerText = `${elecTotal.toLocaleString()} ៛`;
+  const elOld = document.getElementById('inv-elec-old');
+  const elNew = document.getElementById('inv-elec-new');
+  const elRate = document.getElementById('inv-elec-rate');
+  const elUsage = document.getElementById('inv-elec-usage');
+  const elTotal = document.getElementById('inv-elec-total');
 
-  // Water
-  const oldWat = reading.oldWater !== undefined ? reading.oldWater : 45;
-  const newWat = reading.newWater !== undefined ? reading.newWater : 47;
+  if (elOld) elOld.value = oldElec;
+  if (elNew) elNew.value = newElec;
+  if (elRate) elRate.value = elecRate;
+  if (elUsage) elUsage.innerText = elecUsage;
+  if (elTotal) elTotal.innerText = `${elecTotal.toLocaleString()} ៛`;
+
+  const oldWat = reading.oldWater !== undefined 
+    ? reading.oldWater 
+    : (prevReading.newWater !== undefined ? prevReading.newWater : 0);
+  const newWat = reading.newWater !== undefined 
+    ? reading.newWater 
+    : oldWat;
+  const watRate = settings.waterRate || 2200;
   const watUsage = Math.max(0, newWat - oldWat);
-  const watTotal = watUsage * settings.waterRate;
+  const watTotal = watUsage * watRate;
 
-  document.getElementById('inv-water-old').value = oldWat;
-  document.getElementById('inv-water-new').value = newWat;
-  document.getElementById('inv-water-rate').value = settings.waterRate;
-  document.getElementById('inv-water-usage').innerText = watUsage;
-  document.getElementById('inv-water-total').innerText = `${watTotal.toLocaleString()} ៛`;
+  const wtOld = document.getElementById('inv-water-old');
+  const wtNew = document.getElementById('inv-water-new');
+  const wtRate = document.getElementById('inv-water-rate');
+  const wtUsage = document.getElementById('inv-water-usage');
+  const wtTotal = document.getElementById('inv-water-total');
 
-  // Other Fees
-  document.getElementById('inv-trash-fee').value = 0;
-  document.getElementById('inv-wifi-fee').value = 0;
-  document.getElementById('inv-other-fee').value = 0;
+  if (wtOld) wtOld.value = oldWat;
+  if (wtNew) wtNew.value = newWat;
+  if (wtRate) wtRate.value = watRate;
+  if (wtUsage) wtUsage.innerText = watUsage;
+  if (wtTotal) wtTotal.innerText = `${watTotal.toLocaleString()} ៛`;
+
+  // 5. Other Fees (Trash, Wifi, Other) from Settings
+  const trashEl = document.getElementById('inv-trash-fee');
+  const wifiEl = document.getElementById('inv-wifi-fee');
+  const otherEl = document.getElementById('inv-other-fee');
+  if (trashEl) trashEl.value = settings.trashFee || 0;
+  if (wifiEl) wifiEl.value = settings.wifiFee || 0;
+  if (otherEl && !otherEl.value) otherEl.value = 0;
 
   recalcInvoiceGrandTotal();
 }
+window.calculateInvoiceForm = calculateInvoiceForm;
 
 export function handleRoomUsdChange() {
   const settings = store.getSettings();
@@ -467,7 +540,7 @@ export function handleSaveInvoice(e) {
   const roomId = document.getElementById('inv-create-room').value;
   const month = document.getElementById('inv-create-month').value;
   const room = store.getRoomById(roomId);
-  const tenant = store.getTenants().find(t => t.id === (room ? room.tenantId : null));
+  const tenant = store.getTenantForRoom(roomId);
   const settings = store.getSettings();
 
   if (!roomId || !month) {

@@ -339,7 +339,68 @@ class Store {
   saveRooms(rooms) { return this.set('rooms', rooms); }
 
   getRoomById(id) {
-    return this.getRooms().find(r => r.id === id);
+    if (!id) return null;
+    const cleanId = String(id).trim();
+    const cleanNum = cleanId.replace(/^room[-_]?/i, '');
+    return this.getRooms().find(r => 
+      r.id === cleanId || 
+      String(r.id) === cleanId ||
+      r.roomNumber === cleanId ||
+      String(r.roomNumber) === cleanId ||
+      String(r.roomNumber) === cleanNum ||
+      r.id === `room_${cleanNum}` ||
+      `room_${r.roomNumber}` === cleanId
+    ) || null;
+  }
+
+  getTenantForRoom(roomId) {
+    if (!roomId) return null;
+    const room = this.getRoomById(roomId);
+    const tenants = this.getTenants();
+
+    // 1. Direct tenantId reference on room object
+    if (room && room.tenantId) {
+      const t = tenants.find(t => t.id === room.tenantId);
+      if (t) return t;
+    }
+
+    // 2. Direct roomId reference on tenant object
+    const targetRoomId = room ? room.id : roomId;
+    const roomNum = room ? String(room.roomNumber).replace(/^room[-_]?/i, '') : String(roomId).replace(/^room[-_]?/i, '');
+
+    // Check active tenants first
+    const activeTenant = tenants.find(t => 
+      t.status !== 'inactive' && (
+        t.roomId === targetRoomId ||
+        t.roomId === roomId ||
+        t.roomId === roomNum ||
+        `room_${t.roomId}` === targetRoomId ||
+        (t.roomId && String(t.roomId).replace(/^room[-_]?/i, '') === roomNum)
+      )
+    );
+    if (activeTenant) {
+      // Auto-heal relationship if room didn't have tenantId set
+      if (room && room.tenantId !== activeTenant.id) {
+        room.tenantId = activeTenant.id;
+        room.status = 'occupied';
+        this.updateRoom(room.id, { tenantId: activeTenant.id, status: 'occupied' });
+      }
+      return activeTenant;
+    }
+
+    // 3. Fallback to any tenant matching roomId
+    const anyTenant = tenants.find(t => 
+      t.roomId === targetRoomId ||
+      t.roomId === roomId ||
+      t.roomId === roomNum ||
+      `room_${t.roomId}` === targetRoomId ||
+      (t.roomId && String(t.roomId).replace(/^room[-_]?/i, '') === roomNum)
+    );
+    if (anyTenant && room && room.tenantId !== anyTenant.id) {
+      room.tenantId = anyTenant.id;
+      this.updateRoom(room.id, { tenantId: anyTenant.id });
+    }
+    return anyTenant || null;
   }
 
   addRoom(room) {
@@ -463,17 +524,42 @@ class Store {
   saveReadings(readings) { return this.set('meter_readings', readings); }
 
   getReadingForRoomMonth(roomId, month) {
-    return this.getReadings().find(r => r.roomId === roomId && r.month === month);
+    if (!roomId || !month) return null;
+    return this.getReadings().find(r => 
+      (r.roomId === roomId || String(r.roomId).replace(/^room[-_]?/i, '') === String(roomId).replace(/^room[-_]?/i, '')) && 
+      r.month === month
+    ) || null;
+  }
+
+  getReading(param1, param2) {
+    if (!param1 && !param2) return null;
+    const isMonth1 = typeof param1 === 'string' && /^\d{4}-\d{2}$/.test(param1);
+    const month = isMonth1 ? param1 : param2;
+    const roomId = isMonth1 ? param2 : param1;
+    return this.getReadingForRoomMonth(roomId, month) || null;
   }
 
   getPreviousReading(roomId, currentMonth) {
+    if (!roomId) return null;
+    const cleanRoom = String(roomId).replace(/^room[-_]?/i, '');
     const readings = this.getReadings()
-      .filter(r => r.roomId === roomId && r.month < currentMonth)
+      .filter(r => (r.roomId === roomId || String(r.roomId).replace(/^room[-_]?/i, '') === cleanRoom) && (!currentMonth || r.month < currentMonth))
       .sort((a, b) => b.month.localeCompare(a.month));
     return readings[0] || null;
   }
 
-  saveReading(reading) {
+  saveReading(param1, param2, param3) {
+    let reading;
+    if (typeof param1 === 'object' && param1 !== null) {
+      reading = param1;
+    } else {
+      const isMonth1 = typeof param1 === 'string' && /^\d{4}-\d{2}$/.test(param1);
+      const month = isMonth1 ? param1 : param2;
+      const roomId = isMonth1 ? param2 : param1;
+      reading = { ...(param3 || {}), month, roomId };
+    }
+    if (!reading || !reading.roomId || !reading.month) return null;
+
     const readings = this.getReadings();
     const idx = readings.findIndex(r => r.roomId === reading.roomId && r.month === reading.month);
     let readingDoc;
@@ -490,6 +576,7 @@ class Store {
     }
     this.saveReadings(readings);
     this.writeDocToCloud('meter_readings', readingDoc.id, readingDoc);
+    return readingDoc;
   }
 
   // Invoices
@@ -553,6 +640,20 @@ class Store {
     this.saveInvoices(invoices);
     const updated = invoices.find(i => i.id === id);
     if (updated) this.writeDocToCloud('invoices', id, updated);
+  }
+
+  addOrUpdateInvoice(invoice) {
+    const invoices = this.getInvoices();
+    const existing = invoices.find(i => 
+      i.id === invoice.id || 
+      (i.roomId === invoice.roomId && i.month === invoice.month)
+    );
+    if (existing) {
+      this.updateInvoice(existing.id, invoice);
+      return { ...existing, ...invoice };
+    } else {
+      return this.addInvoice(invoice);
+    }
   }
 
   updateInvoicePayment(id, status, paidAmount = null) {

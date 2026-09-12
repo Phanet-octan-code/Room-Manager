@@ -130,6 +130,7 @@ window.toggleUtilityFormulas = toggleUtilityFormulas;
 
 window.openCreateInvoiceModal = openCreateInvoiceModal;
 window.closeCreateInvoiceModal = closeCreateInvoiceModal;
+window.calculateInvoiceForm = calculateInvoiceForm;
 window.viewInvoiceModal = viewInvoiceModal;
 window.closeInvoiceViewModal = closeInvoiceViewModal;
 window.printInvoice = printInvoice;
