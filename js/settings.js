@@ -7,6 +7,8 @@ import {
   clearFirebaseConfig, 
   initializeFirebase, 
   testFirebaseConnection, 
+  testFirebaseStorage,
+  DEFAULT_STORAGE_RULES,
   isFirebaseConnected, 
   hasFirebaseRulesWarning, 
   getFirebaseLastError 
@@ -145,6 +147,37 @@ export async function handleTestFirebaseConnection() {
     showToast('បរាជ័យក្នុងការតេស្ត៖ ' + (res.error || 'Unknown error'), 'error', 6000);
   }
 }
+
+export async function handleTestFirebaseStorage() {
+  const badge = document.getElementById('firebase-sync-status-msg');
+  if (badge) badge.innerText = 'កំពុងធ្វើតេស្ត Firebase Cloud Storage...';
+
+  const res = await testFirebaseStorage();
+  if (res.success) {
+    if (badge) badge.innerText = `✓ Firebase Storage ដំណើរការជោគជ័យ! (${res.bucket})`;
+    showToast(`Firebase Storage (${res.bucket}) ដំណើរការជោគជ័យ! រូបភាពទាំងអស់នឹងផ្ទុកឡើងទៅ Firebase។`, 'success', 6000);
+  } else if (res.rulesWarning) {
+    if (badge) badge.innerText = '⚠ ជាប់ Storage Rules: សូមចូល Firebase Console → Storage → Rules រួចដាក់ allow read, write: if true;';
+    showToast('Firebase Storage បានស្គាល់ ប៉ុន្តែជាប់សិទ្ធិ (Storage Rules Locked)!', 'warning', 8000);
+  } else if (res.notInitialized) {
+    if (badge) badge.innerText = '⚠ Cloud Storage មិនទាន់ចុច "Get started" ក្នុង Firebase Console (រូបភាពនឹងរក្សាទុកក្នុង Firestore ជាបណ្តោះអាសន្ន)';
+    showToast('សូមចូល Firebase Console → Storage រួចចុច "Get started" ដើម្បីបើក Cloud Storage!', 'warning', 8000);
+  } else {
+    if (badge) badge.innerText = '⚠ បរាជ័យក្នុងការតេស្ត Storage៖ ' + (res.error || 'Unknown error');
+    showToast('មិនអាចតភ្ជាប់ Firebase Storage បានទេ៖ ' + (res.error || 'Unknown error'), 'error', 6000);
+  }
+}
+window.handleTestFirebaseStorage = handleTestFirebaseStorage;
+
+export function copyStorageRules() {
+  const code = document.getElementById('storage-rules-code')?.innerText || DEFAULT_STORAGE_RULES;
+  navigator.clipboard.writeText(code).then(() => {
+    showToast('បានចម្លង Firebase Storage Rules រួចរាល់! សូមយកទៅ Paste ក្នុង Firebase Console → Storage → Rules', 'success', 6000);
+  }).catch(() => {
+    showToast('មិនអាចចម្លង Rules បានទេ', 'error');
+  });
+}
+window.copyStorageRules = copyStorageRules;
 
 export async function handleSyncFirebase() {
   const badge = document.getElementById('firebase-sync-status-msg');

@@ -14,7 +14,8 @@ import {
   viewTenantPhoto,
   closePhotoViewer,
   handleTenantPhotoUpload,
-  handleTenantIdCardPhotoUpload
+  handleTenantIdCardPhotoUpload,
+  promptTenantPhotoLink
 } from './tenants.js';
 import { renderUtilities, calculateRow, saveAllUtilities, toggleUtilityFormulas } from './utilities.js';
 import {
@@ -111,6 +112,7 @@ window.closeTenantViewModal = closeTenantViewModal;
 window.printTenantDetails = printTenantDetails;
 window.handleTenantPhotoUpload = handleTenantPhotoUpload;
 window.handleTenantIdCardPhotoUpload = handleTenantIdCardPhotoUpload;
+window.promptTenantPhotoLink = promptTenantPhotoLink;
 window.deleteTenant = async (id) => {
   const ok = await showConfirm('តើអ្នកចង់លុបព័ត៌មានអ្នកជួលនេះមែនទេ?', { title: 'លុបអ្នកជួល', danger: true, okText: 'លុប' });
   if (ok) {

@@ -129,9 +129,13 @@ export function renderRooms() {
           <td class="py-3.5 px-3 whitespace-nowrap">
             ${tenant ? `
               <div onclick="window.viewTenantDetails('${tenant.id}')" class="flex items-center gap-2 cursor-pointer hover:bg-blue-50 p-1.5 rounded-xl transition group border border-transparent hover:border-blue-200" title="ចុចដើម្បីមើលព័ត៌មានលម្អិតអ្នកជួល">
-                <div class="w-6 h-6 rounded-full bg-blue-50 group-hover:bg-blue-600 group-hover:text-white text-blue-700 flex items-center justify-center font-bold text-[10px] transition border border-blue-200">
-                  ${tenant.name.charAt(0)}
-                </div>
+                ${tenant.photoUrl ? `
+                  <img src="${tenant.photoUrl}" class="w-6 h-6 rounded-full object-cover border border-blue-200 shadow-2xs flex-shrink-0">
+                ` : `
+                  <div class="w-6 h-6 rounded-full bg-blue-50 group-hover:bg-blue-600 group-hover:text-white text-blue-700 flex items-center justify-center font-bold text-[10px] transition border border-blue-200 flex-shrink-0">
+                    ${tenant.name.charAt(0)}
+                  </div>
+                `}
                 <span class="font-semibold text-slate-800 text-xs group-hover:text-blue-700 transition flex items-center gap-1">
                   ${tenant.name}
                   <i class="fa-solid fa-circle-info text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition"></i>
@@ -217,8 +221,9 @@ export function renderRooms() {
             <span class="text-slate-400">អ្នកជួលបច្ចុប្បន្ន:</span>
             <span>
               ${tenant ? `
-                <button onclick="window.viewTenantDetails('${tenant.id}')" class="font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1 border border-blue-200">
-                  <i class="fa-solid fa-user text-[10px]"></i> ${tenant.name}
+                <button onclick="window.viewTenantDetails('${tenant.id}')" class="font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 border border-blue-200">
+                  ${tenant.photoUrl ? `<img src="${tenant.photoUrl}" class="w-4 h-4 rounded-full object-cover shadow-2xs">` : '<i class="fa-solid fa-user text-[10px]"></i>'} 
+                  <span>${tenant.name}</span>
                 </button>
               ` : '<span class="text-slate-400 font-normal italic">គ្មានអ្នកជួល</span>'}
             </span>

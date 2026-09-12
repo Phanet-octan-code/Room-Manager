@@ -71,6 +71,7 @@
     "imports": {
       "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
       "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js",
+      "firebase/storage": "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js",
       "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"
     }
   }
@@ -1487,6 +1488,37 @@ service cloud.firestore {
 }</pre>
                 </div>
 
+                <!-- Firebase Storage (Image Upload) Callout -->
+                <div class="p-3 bg-blue-50/80 border border-blue-200 rounded-xl space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-blue-950 flex items-center gap-1.5 text-xs">
+                      <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i>
+                      ការកំណត់ Firebase Storage (ផ្ទុករូបភាព & Link)
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                      <button type="button" onclick="window.copyStorageRules()"
+                        class="px-2 py-0.5 bg-blue-200 hover:bg-blue-300 text-blue-900 rounded font-semibold text-[10px] transition active:scale-95 flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i> <span>ចម្លង Rules</span>
+                      </button>
+                      <button type="button" onclick="window.handleTestFirebaseStorage()"
+                        class="px-2 py-0.5 bg-white hover:bg-blue-100 text-blue-700 border border-blue-300 rounded font-semibold text-[10px] transition active:scale-95 flex items-center gap-1">
+                        <i class="fa-solid fa-vial"></i> <span>តេស្ត Storage</span>
+                      </button>
+                    </div>
+                  </div>
+                  <p class="text-[11px] text-blue-900 leading-relaxed">
+                    ដើម្បីផ្ទុករូបថតអ្នកជួល និងអត្តសញ្ញាណប័ណ្ណជា URL ក្នុង Firebase សូមចូល <a href="https://console.firebase.google.com/project/room-payment/storage" target="_blank" class="underline font-semibold text-blue-700 hover:text-blue-900">Firebase Console → Storage</a> (ចុច <strong>Get started</strong> ប្រសិនបើមិនទាន់បើក) រួចចូល <strong>Rules</strong> ដាក់កូដខាងក្រោម ហើយចុច <strong>Publish</strong>៖
+                  </p>
+                  <pre id="storage-rules-code" class="p-2.5 bg-slate-950 text-sky-400 rounded-lg text-[10px] font-mono leading-tight overflow-x-auto selection:bg-sky-700 selection:text-white">rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}</pre>
+                </div>
+
                 <!-- Actions -->
                 <div class="flex flex-wrap items-center gap-2 pt-1">
                   <button type="submit"
@@ -1494,8 +1526,14 @@ service cloud.firestore {
                     <i class="fa-solid fa-fire"></i> <span>រក្សាទុក & ភ្ជាប់ Firebase</span>
                   </button>
                   <button type="button" onclick="window.handleTestFirebaseConnection()"
-                    class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition flex items-center gap-1 active:scale-98">
-                    <i class="fa-solid fa-vial"></i> <span>តេស្តការភ្ជាប់</span>
+                    class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition flex items-center gap-1 active:scale-98"
+                    title="ធ្វើតេស្ត Read/Write លើ Cloud Firestore">
+                    <i class="fa-solid fa-vial"></i> <span>តេស្ត Firestore</span>
+                  </button>
+                  <button type="button" onclick="window.handleTestFirebaseStorage()"
+                    class="py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-medium transition flex items-center gap-1 active:scale-98"
+                    title="ធ្វើតេស្តផ្ទុករូបភាពលើ Firebase Cloud Storage">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span>តេស្ត Storage</span>
                   </button>
                   <button type="button" onclick="window.handleClearFirebase()"
                     class="py-2 px-2.5 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 rounded-xl font-medium transition flex items-center gap-1"
@@ -1905,12 +1943,19 @@ service cloud.firestore {
               </div>
               <div class="flex flex-wrap gap-1.5 flex-1">
                 <button type="button" onclick="document.getElementById('tenant-photo-input').click()"
-                  class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition">
+                  class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition"
+                  title="ផ្ទុកឡើងរូបភាពពីកុំព្យូទ័រ/ទូរស័ព្ទ">
                   <i class="fa-solid fa-upload text-[10px] text-blue-600"></i> <span>ផ្ទុកឡើង</span>
                 </button>
                 <button type="button" onclick="window.triggerCameraCapture('profile')"
-                  class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition">
+                  class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition"
+                  title="ថតរូបផ្ទាល់ពីកាមេរ៉ា">
                   <i class="fa-solid fa-camera text-[10px]"></i> <span>ថតរូប</span>
+                </button>
+                <button type="button" onclick="window.promptTenantPhotoLink('profile')"
+                  class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition"
+                  title="បញ្ចូលតំណភ្ជាប់រូបភាព (Firebase URL ឬ Web Link)">
+                  <i class="fa-solid fa-link text-[10px] text-slate-500"></i> <span>Link</span>
                 </button>
                 <button type="button" id="tenant-photo-remove-btn" onclick="window.removeTenantPhoto()"
                   class="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-semibold hidden items-center gap-1 transition">
@@ -1936,12 +1981,19 @@ service cloud.firestore {
               </div>
               <div class="flex flex-wrap gap-1.5 flex-1">
                 <button type="button" onclick="document.getElementById('tenant-idcard-photo-input').click()"
-                  class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition">
+                  class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition"
+                  title="ផ្ទុកឡើងរូបភាពពីកុំព្យូទ័រ/ទូរស័ព្ទ">
                   <i class="fa-solid fa-upload text-[10px] text-blue-600"></i> <span>ផ្ទុកឡើង</span>
                 </button>
                 <button type="button" onclick="window.triggerCameraCapture('idcard')"
-                  class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition">
+                  class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition"
+                  title="ថតរូបផ្ទាល់ពីកាមេរ៉ា">
                   <i class="fa-solid fa-camera text-[10px]"></i> <span>ថតរូប</span>
+                </button>
+                <button type="button" onclick="window.promptTenantPhotoLink('idcard')"
+                  class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition"
+                  title="បញ្ចូលតំណភ្ជាប់រូបភាព (Firebase URL ឬ Web Link)">
+                  <i class="fa-solid fa-link text-[10px] text-slate-500"></i> <span>Link</span>
                 </button>
                 <button type="button" id="tenant-idcard-remove-btn" onclick="window.removeTenantIdCardPhoto()"
                   class="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[11px] font-semibold hidden items-center gap-1 transition">
@@ -2110,6 +2162,11 @@ service cloud.firestore {
           <i class="fa-solid fa-image text-blue-600 text-sm"></i> <span>រូបថត / អត្តសញ្ញាណប័ណ្ណ</span>
         </h3>
         <div class="flex items-center gap-2">
+          <button id="photo-viewer-copy-btn" type="button"
+            class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-slate-200 transition"
+            title="ចម្លងតំណភ្ជាប់រូបភាព (Firebase URL)">
+            <i class="fa-solid fa-link text-xs text-blue-600"></i> <span>ចម្លង Link</span>
+          </button>
           <a id="photo-viewer-download-btn" href="#" download="photo.jpg"
             class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-blue-200 transition"
             title="ទាញយករូបភាព">
@@ -2125,8 +2182,18 @@ service cloud.firestore {
         class="max-h-[70vh] overflow-auto flex items-center justify-center bg-slate-950 rounded-2xl p-2.5 flex-1 border border-slate-800 shadow-inner">
         <img id="photo-viewer-img" src="" class="max-h-[65vh] w-auto rounded-xl object-contain shadow-md">
       </div>
+      <!-- Direct Image Link Display -->
+      <div id="photo-viewer-link-container" class="mt-2.5 p-2 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-xs font-mono hidden">
+        <span class="text-[10px] text-slate-400 font-sans flex-shrink-0 flex items-center gap-1">
+          <i class="fa-solid fa-cloud text-amber-500"></i> Link:
+        </span>
+        <span id="photo-viewer-link-text" class="text-slate-700 text-[11px] truncate flex-1 select-all"></span>
+        <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] rounded-md font-semibold flex-shrink-0">
+          Firebase
+        </span>
+      </div>
       <div class="mt-3 flex items-center justify-between text-xs">
-        <span class="text-slate-400">ចុច "ទាញយក" ដើម្បីរក្សាទុករូបភាពច្បាស់</span>
+        <span class="text-slate-400">ចុច "ចម្លង Link" ឬ "ទាញយក" ដើម្បីយករូបភាពច្បាស់</span>
         <button onclick="window.closePhotoViewer()"
           class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition">បិទ</button>
       </div>

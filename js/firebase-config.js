@@ -16,6 +16,13 @@ import {
   onSnapshot 
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getAnalytics, isSupported as isAnalyticsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js';
+import { 
+  getStorage, 
+  ref as storageRef, 
+  uploadString, 
+  uploadBytes, 
+  getDownloadURL 
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 // Pre-configured credentials provided for room-payment
 export const DEFAULT_FIREBASE_CONFIG = {
@@ -420,3 +427,145 @@ export function subscribeFirebaseCollection(collectionName, onUpdate) {
     return () => {};
   }
 }
+
+// ==================== FIREBASE STORAGE IMAGE UPLOAD ====================
+let storageInstance = null;
+
+export const DEFAULT_STORAGE_RULES = `rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}`;
+
+export function getFirebaseStorage(customBucket) {
+  if (customBucket && firebaseApp) {
+    try {
+      return getStorage(firebaseApp, `gs://${customBucket.replace(/^gs:\/\//, '')}`);
+    } catch (e) {
+      console.warn('Custom bucket init notice:', e);
+    }
+  }
+  if (!storageInstance && firebaseApp) {
+    try {
+      storageInstance = getStorage(firebaseApp);
+    } catch (e) {
+      console.warn('Firebase Storage init error:', e);
+    }
+  }
+  return storageInstance;
+}
+
+// Upload image to Firebase Storage and get permanent download link
+export async function uploadImageToFirebase(dataUrlOrFile, folder = 'tenants') {
+  if (!firebaseApp) {
+    await initializeFirebase();
+  }
+  if (!firebaseApp) return null;
+
+  const cfg = getSavedFirebaseConfig();
+  const bucketsToTry = [];
+  if (cfg.storageBucket) bucketsToTry.push(cfg.storageBucket);
+  if (cfg.projectId) {
+    const b1 = `${cfg.projectId}.firebasestorage.app`;
+    const b2 = `${cfg.projectId}.appspot.com`;
+    if (!bucketsToTry.includes(b1)) bucketsToTry.push(b1);
+    if (!bucketsToTry.includes(b2)) bucketsToTry.push(b2);
+  }
+
+  for (const bucket of bucketsToTry) {
+    try {
+      const storage = getFirebaseStorage(bucket);
+      if (!storage) continue;
+
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 8);
+      const fileName = `${folder}/${timestamp}_${randomStr}.jpg`;
+      const fileRef = storageRef(storage, fileName);
+
+      if (typeof dataUrlOrFile === 'string' && dataUrlOrFile.startsWith('data:')) {
+        await uploadString(fileRef, dataUrlOrFile, 'data_url');
+      } else if (typeof dataUrlOrFile === 'object') {
+        await uploadBytes(fileRef, dataUrlOrFile);
+      } else {
+        return null;
+      }
+
+      const downloadUrl = await getDownloadURL(fileRef);
+      console.log(`✓ [Firebase Storage (${bucket})] Image link created:`, downloadUrl);
+      return downloadUrl;
+    } catch (err) {
+      console.warn(`[Firebase Storage bucket try ${bucket} notice]:`, err.code || err.message);
+    }
+  }
+
+  return null;
+}
+window.uploadImageToFirebase = uploadImageToFirebase;
+
+// Test Firebase Storage connection and read/write permissions
+export async function testFirebaseStorage() {
+  if (!firebaseApp) {
+    await initializeFirebase();
+  }
+  if (!firebaseApp) {
+    return { success: false, error: 'Firebase App is not initialized' };
+  }
+
+  const cfg = getSavedFirebaseConfig();
+  const bucketsToTry = [];
+  if (cfg.storageBucket) bucketsToTry.push(cfg.storageBucket);
+  if (cfg.projectId) {
+    const b1 = `${cfg.projectId}.firebasestorage.app`;
+    const b2 = `${cfg.projectId}.appspot.com`;
+    if (!bucketsToTry.includes(b1)) bucketsToTry.push(b1);
+    if (!bucketsToTry.includes(b2)) bucketsToTry.push(b2);
+  }
+
+  let notInitCount = 0;
+  for (const bucket of bucketsToTry) {
+    try {
+      const storage = getFirebaseStorage(bucket);
+      if (!storage) continue;
+
+      const testRef = storageRef(storage, `_test_ping_${Date.now()}.txt`);
+      await uploadString(testRef, 'ping_ok', 'raw');
+      const testUrl = await getDownloadURL(testRef);
+
+      return {
+        success: true,
+        bucket,
+        url: testUrl
+      };
+    } catch (err) {
+      if (err.code === 'storage/unauthorized' || err.code === 'storage/permission-denied') {
+        return {
+          success: false,
+          bucket,
+          rulesWarning: true,
+          error: 'ជាប់សិទ្ធិ (Storage Rules Locked): សូមចូល Firebase Console → Storage → Rules រួចដាក់ allow read, write: if true;'
+        };
+      }
+      if (err.code === 'storage/unknown' || (err.message && (err.message.includes('404') || err.message.includes('Not Found')))) {
+        notInitCount++;
+        continue;
+      }
+      return { success: false, bucket, error: err.message || err.code };
+    }
+  }
+
+  if (notInitCount > 0) {
+    return {
+      success: false,
+      notInitialized: true,
+      error: 'Cloud Storage មិនទាន់ត្រូវបានចុច "Get started" ក្នុង Firebase Console នៅឡើយទេ។'
+    };
+  }
+
+  return { success: false, error: 'មិនអាចភ្ជាប់ Firebase Storage បានទេ' };
+}
+window.testFirebaseStorage = testFirebaseStorage;
+
+

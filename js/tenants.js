@@ -485,28 +485,44 @@ window.compressImage = compressImage;
 async function uploadImageToCloudinary(dataUrl, folder = 'tenants') {
   try {
     const compressed = await compressImage(dataUrl, 1200, 1200, 0.82);
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: compressed, folder })
-    });
-    if (res.ok) {
-      const result = await res.json();
-      if (result.success && result.url) {
-        return result.url;
+
+    // 1. Prioritize uploading directly to Firebase Storage
+    if (typeof window.uploadImageToFirebase === 'function') {
+      try {
+        const fbUrl = await window.uploadImageToFirebase(compressed, folder);
+        if (fbUrl) {
+          console.log(`✓ [Firebase Storage] Image link created for ${folder}:`, fbUrl);
+          return fbUrl;
+        }
+      } catch (fbErr) {
+        console.warn('Firebase Storage upload notice, using fallback:', fbErr);
       }
     }
+
+    // 2. Try Cloudinary via server API if available
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: compressed, folder })
+      }).catch(() => null);
+      if (res && res.ok) {
+        const result = await res.json();
+        if (result.success && result.url) {
+          return result.url;
+        }
+      }
+    } catch (apiErr) {}
+
+    // 3. Fallback to high-quality compressed image string stored directly in Firebase Firestore
     return compressed;
   } catch (err) {
-    console.warn('Cloudinary upload error, using compressed image:', err);
-    try {
-      return await compressImage(dataUrl, 1000, 1000, 0.75);
-    } catch {
-      return dataUrl;
-    }
+    console.warn('Image processing notice:', err);
+    return dataUrl;
   }
 }
 window.uploadImageToCloudinary = uploadImageToCloudinary;
+window.uploadImageToCloud = uploadImageToCloudinary;
 
 export async function confirmCameraPhoto() {
   if (!currentCapturedPhotoData) return;
@@ -516,10 +532,10 @@ export async function confirmCameraPhoto() {
     const targetId = window._pendingIdCardTenantId;
     window._pendingIdCardTenantId = null;
     closeCameraModal();
-    showToast('កំពុងផ្ទុកឡើងរូបថត...', 'info');
+    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Firebase...', 'info');
     const cloudUrl = await uploadImageToCloudinary(snapData, 'idcards');
     store.updateTenant(targetId, { idCardPhotoUrl: cloudUrl });
-    showToast('បានរក្សាទុករូបថតអត្តសញ្ញាណប័ណ្ណជោគជ័យ ✓', 'success');
+    showToast('បានរក្សាទុកតំណរូបថតអត្តសញ្ញាណប័ណ្ណក្នុង Firebase ជោគជ័យ ✓', 'success');
     renderTenants();
     viewTenantDetails(targetId);
     return;
@@ -542,10 +558,14 @@ export async function confirmCameraPhoto() {
       removeBtn.classList.add('inline-flex');
     }
     closeCameraModal();
-    showToast('កំពុងផ្ទុកឡើងរូបថត...', 'info');
+    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Firebase...', 'info');
     uploadImageToCloudinary(snapData, 'idcards').then(cloudUrl => {
       if (dataInput) dataInput.value = cloudUrl;
-      showToast('រូបអត្តសញ្ញាណប័ណ្ណត្រូវបានផ្ទុកឡើងរួចរាល់ ✓', 'success');
+      const tenantId = document.getElementById('tenant-id')?.value;
+      if (tenantId) {
+        store.updateTenant(tenantId, { idCardPhotoUrl: cloudUrl });
+      }
+      showToast('រូបអត្តសញ្ញាណប័ណ្ណត្រូវបានផ្ទុកឡើងក្នុង Firebase រួចរាល់ ✓', 'success');
     });
   } else {
     const dataInput = document.getElementById('tenant-photo-data');
@@ -564,14 +584,50 @@ export async function confirmCameraPhoto() {
       removeBtn.classList.add('inline-flex');
     }
     closeCameraModal();
-    showToast('កំពុងផ្ទុកឡើងរូបថត...', 'info');
+    showToast('កំពុងផ្ទុកឡើងរូបថតទៅកាន់ Firebase...', 'info');
     uploadImageToCloudinary(snapData, 'tenants').then(cloudUrl => {
       if (dataInput) dataInput.value = cloudUrl;
-      showToast('រូបថតអ្នកជួលត្រូវបានផ្ទុកឡើងរួចរាល់ ✓', 'success');
+      const tenantId = document.getElementById('tenant-id')?.value;
+      if (tenantId) {
+        store.updateTenant(tenantId, { photoUrl: cloudUrl });
+      }
+      showToast('រូបថតអ្នកជួលត្រូវបានផ្ទុកឡើងក្នុង Firebase រួចរាល់ ✓', 'success');
     });
   }
 }
 window.confirmCameraPhoto = confirmCameraPhoto;
+
+// Allow direct image URL linking for tenant photos and ID cards
+export function promptTenantPhotoLink(target = 'profile') {
+  const isIdCard = target === 'idcard';
+  const dataInput = document.getElementById(isIdCard ? 'tenant-idcard-photo-data' : 'tenant-photo-data');
+  const preview = document.getElementById(isIdCard ? 'tenant-idcard-preview' : 'tenant-photo-preview');
+  const placeholder = document.getElementById(isIdCard ? 'tenant-idcard-placeholder' : 'tenant-photo-placeholder');
+  const removeBtn = document.getElementById(isIdCard ? 'tenant-idcard-remove-btn' : 'tenant-photo-remove-btn');
+
+  const currentVal = dataInput?.value || '';
+  const initialPrompt = currentVal.startsWith('http') ? currentVal : '';
+  const label = isIdCard ? 'រូបភាពអត្តសញ្ញាណប័ណ្ណ (ID Card Image URL)' : 'រូបថតអ្នកជួល (Profile Photo URL)';
+
+  const enteredUrl = prompt(`សូមបញ្ចូលតំណភ្ជាប់ ${label} (Firebase Storage URL ឬ Web Link)៖`, initialPrompt);
+  if (enteredUrl === null) return;
+
+  const cleanUrl = enteredUrl.trim();
+  if (cleanUrl) {
+    if (dataInput) dataInput.value = cleanUrl;
+    if (preview) {
+      preview.src = cleanUrl;
+      preview.classList.remove('hidden');
+    }
+    if (placeholder) placeholder.classList.add('hidden');
+    if (removeBtn) {
+      removeBtn.classList.remove('hidden');
+      removeBtn.classList.add('inline-flex');
+    }
+    showToast('បានភ្ជាប់តំណរូបភាព Firebase ជោគជ័យ ✓', 'success');
+  }
+}
+window.promptTenantPhotoLink = promptTenantPhotoLink;
 
 export function removeTenantPhoto() {
   const photoData = document.getElementById('tenant-photo-data');
@@ -807,11 +863,32 @@ export function viewTenantPhoto(photoUrl, name = 'រូបថត') {
   const img = document.getElementById('photo-viewer-img');
   const title = document.getElementById('photo-viewer-title');
   const downloadBtn = document.getElementById('photo-viewer-download-btn');
+  const copyBtn = document.getElementById('photo-viewer-copy-btn');
+  const linkText = document.getElementById('photo-viewer-link-text');
+  const linkContainer = document.getElementById('photo-viewer-link-container');
+
   if (img) img.src = photoUrl;
   if (title) title.innerHTML = `<i class="fa-solid fa-image text-blue-600 text-sm"></i> <span>${name}</span>`;
   if (downloadBtn) {
     downloadBtn.href = photoUrl;
     downloadBtn.download = `${name.replace(/\s+/g, '_')}.jpg`;
+  }
+  if (copyBtn) {
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(photoUrl).then(() => {
+        showToast('បានចម្លងតំណភ្ជាប់រូបភាពរួចរាល់ ✓', 'success');
+      }).catch(() => {
+        showToast('មិនអាចចម្លងតំណភ្ជាប់បានទេ', 'error');
+      });
+    };
+  }
+  if (linkText && linkContainer) {
+    if (photoUrl.startsWith('http')) {
+      linkText.innerText = photoUrl;
+      linkContainer.classList.remove('hidden');
+    } else {
+      linkContainer.classList.add('hidden');
+    }
   }
   if (modal) modal.classList.remove('hidden');
 }
