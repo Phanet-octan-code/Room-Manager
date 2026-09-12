@@ -1,6 +1,16 @@
-// Settings, Supabase Configuration, and Data Backup/Restore
+// Settings, Firebase Cloud Firestore & Supabase Configuration, and Data Backup/Restore
 import { store } from './store.js';
 import { showToast, showConfirm } from './toast.js';
+import { 
+  getSavedFirebaseConfig, 
+  saveFirebaseConfig, 
+  clearFirebaseConfig, 
+  initializeFirebase, 
+  testFirebaseConnection, 
+  isFirebaseConnected, 
+  hasFirebaseRulesWarning, 
+  getFirebaseLastError 
+} from './firebase-config.js';
 import { 
   getSavedSupabaseConfig, 
   saveSupabaseConfig, 
@@ -31,6 +41,19 @@ export async function loadSettingsForm() {
   setVal('setting-khqr-acc-khr', settings.abaKhqrAccountKhr || '008 270 004');
   setVal('setting-khqr-name', settings.abaAccountName || 'PHANET THAI');
   setVal('setting-invoice-note', settings.invoiceNote);
+
+  // Firebase Database Form
+  const fbConfig = getSavedFirebaseConfig();
+  setVal('firebase-project-id', fbConfig.projectId || 'room-payment');
+  setVal('firebase-api-key', fbConfig.apiKey || 'AIzaSyDMLsB2drG1t9y0U2UO9MD52kiWhMRQH5s');
+  setVal('firebase-auth-domain', fbConfig.authDomain || 'room-payment.firebaseapp.com');
+  setVal('firebase-storage-bucket', fbConfig.storageBucket || 'room-payment.firebasestorage.app');
+  setVal('firebase-sender-id', fbConfig.messagingSenderId || '276598215933');
+  setVal('firebase-app-id', fbConfig.appId || '1:276598215933:web:d81e7b5c2c690d5089da94');
+  setVal('firebase-measurement-id', fbConfig.measurementId || 'G-BNQFL0CT5B');
+
+  const fbStatus = await testFirebaseConnection();
+  updateFirebaseBadge(fbStatus.connected, fbStatus.rulesWarning);
 
   // Supabase Database Form
   const supaConfig = getSavedSupabaseConfig();
@@ -70,6 +93,155 @@ export function handleSaveGeneralSettings(e) {
   showToast('បានរក្សាទុកការកំណត់ទូទៅដោយជោគជ័យ!', 'success');
   if (window.updateDashboardStats) window.updateDashboardStats();
 }
+
+// ==================== FIREBASE HANDLERS ====================
+
+export async function handleSaveFirebaseConfig(e) {
+  if (e) e.preventDefault();
+
+  const config = {
+    projectId: document.getElementById('firebase-project-id')?.value.trim() || 'room-payment',
+    apiKey: document.getElementById('firebase-api-key')?.value.trim() || 'AIzaSyDMLsB2drG1t9y0U2UO9MD52kiWhMRQH5s',
+    authDomain: document.getElementById('firebase-auth-domain')?.value.trim() || 'room-payment.firebaseapp.com',
+    storageBucket: document.getElementById('firebase-storage-bucket')?.value.trim() || 'room-payment.firebasestorage.app',
+    messagingSenderId: document.getElementById('firebase-sender-id')?.value.trim() || '276598215933',
+    appId: document.getElementById('firebase-app-id')?.value.trim() || '1:276598215933:web:d81e7b5c2c690d5089da94',
+    measurementId: document.getElementById('firebase-measurement-id')?.value.trim() || 'G-BNQFL0CT5B'
+  };
+
+  const badge = document.getElementById('firebase-sync-status-msg');
+  if (badge) badge.innerText = 'កំពុងភ្ជាប់ទៅកាន់ Firebase Firestore...';
+
+  const res = await saveFirebaseConfig(config);
+  updateFirebaseBadge(res.connected, res.rulesWarning);
+
+  if (res.connected) {
+    if (badge) badge.innerText = '✓ បានភ្ជាប់ Firebase Cloud Firestore ជោគជ័យ!';
+    showToast('បានភ្ជាប់ទៅកាន់ Firebase Cloud Firestore ជោគជ័យ!', 'success');
+  } else if (res.rulesWarning) {
+    if (badge) badge.innerText = '⚠ Firebase បានភ្ជាប់ ប៉ុន្តែ Firestore Security Rules កំពុង Lock (សូម Publish Rules)';
+    showToast('Firebase បានភ្ជាប់រួចរាល់ ប៉ុន្តែសូមបើក Firestore Security Rules ក្នុង Firebase Console', 'warning', 7000);
+  } else {
+    if (badge) badge.innerText = '⚠ មិនអាចភ្ជាប់ Firebase៖ ' + (res.error || 'សូមពិនិត្យមើល API Key');
+    showToast('មិនអាចភ្ជាប់ Firebase បានទេ៖ ' + (res.error || 'សូមពិនិត្យមើល API Key'), 'error', 6000);
+  }
+}
+
+export async function handleTestFirebaseConnection() {
+  const badge = document.getElementById('firebase-sync-status-msg');
+  if (badge) badge.innerText = 'កំពុងធ្វើតេស្តការភ្ជាប់ Firebase Cloud Firestore...';
+
+  const res = await testFirebaseConnection();
+  updateFirebaseBadge(res.connected, res.rulesWarning);
+
+  if (res.connected) {
+    if (badge) badge.innerText = '✓ ការធ្វើតេស្តជោគជ័យ! Read/Write ដំណើរការបានល្អ។';
+    showToast('តេស្ត Firebase Firestore ជោគជ័យ! អាចផ្ទុកទិន្នន័យបានពេញលេញ។', 'success');
+  } else if (res.rulesWarning) {
+    if (badge) badge.innerText = '⚠ ជាប់ Security Rules: សូមចូល Firebase Console → Firestore → Rules រួចដាក់ allow read, write: if true;';
+    showToast('Firebase បានស្គាល់ Database ហើយ ប៉ុន្តែជាប់ Permission (Security Rules)!', 'warning', 8000);
+  } else {
+    if (badge) badge.innerText = '⚠ បរាជ័យ៖ ' + (res.error || 'សូមពិនិត្យមើល Internet ឬ API Key');
+    showToast('បរាជ័យក្នុងការតេស្ត៖ ' + (res.error || 'Unknown error'), 'error', 6000);
+  }
+}
+
+export async function handleSyncFirebase() {
+  const badge = document.getElementById('firebase-sync-status-msg');
+  if (badge) badge.innerText = 'កំពុង Sync ទិន្នន័យទាំងអស់ទៅ Firebase Firestore...';
+
+  const test = await testFirebaseConnection();
+  if (test.rulesWarning) {
+    showToast('មិនអាច Sync បានទេដោយសារ Firestore Rules កំពុង Lock! សូមបើក Rules ក្នុង Firebase Console ជាមុនសិន។', 'warning', 8000);
+    if (badge) badge.innerText = '⚠ Security Rules កំពុង Lock';
+    return;
+  }
+
+  const result = await store.pushAllToFirebase();
+  if (result && result.success) {
+    updateFirebaseBadge(true, false);
+    if (badge) badge.innerText = '✓ បាន Sync ទិន្នន័យទាំងអស់ទៅ Firebase Firestore ជោគជ័យ!';
+    showToast('បាន Sync បន្ទប់, អ្នកជួល, កុងទ័រ, វិក្កយបត្រ ទៅកាន់ Firebase រួចរាល់!', 'success');
+    setTimeout(() => { if (badge) badge.innerText = ''; }, 5000);
+  } else {
+    const errMsg = result ? result.error : 'Unknown error';
+    showToast('បរាជ័យក្នុងការ Sync ទៅ Firebase៖ ' + errMsg, 'error', 7000);
+    if (badge) badge.innerText = '⚠ បរាជ័យ៖ ' + errMsg;
+  }
+}
+
+export async function handlePullFirebase() {
+  const ok = await showConfirm('តើអ្នកចង់ទាញយកទិន្នន័យចុងក្រោយពី Firebase Cloud Firestore មកជំនួសទិន្នន័យក្នុងម៉ាស៊ីននេះមែនទេ?', {
+    title: 'Pull ទិន្នន័យពី Firebase',
+    okText: 'ទាញយក',
+    cancelText: 'បោះបង់'
+  });
+  if (ok) {
+    const badge = document.getElementById('firebase-sync-status-msg');
+    if (badge) badge.innerText = 'កំពុងទាញយកទិន្នន័យពី Firebase...';
+
+    const hasData = await store.loadFromFirebase();
+    if (hasData) {
+      showToast('បានទាញយកទិន្នន័យពី Firebase Cloud Firestore ជោគជ័យ!', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showToast('មិនមានទិន្នន័យក្នុង Firebase ឬជាប់ Permission Rules។', 'info', 5000);
+      if (badge) badge.innerText = 'ℹ មិនទាន់មានទិន្នន័យក្នុង Firebase ទេ';
+    }
+  }
+}
+
+export async function handleClearFirebase() {
+  const ok = await showConfirm('តើអ្នកចង់កំណត់ Firebase Config ទៅជាតម្លៃដើមវិញមែនទេ?', {
+    title: 'កំណត់ឡើងវិញ Firebase Config',
+    okText: 'កំណត់ឡើងវិញ',
+    cancelText: 'បោះបង់'
+  });
+  if (ok) {
+    clearFirebaseConfig();
+    loadSettingsForm();
+    showToast('បានកំណត់ Firebase Config មកតម្លៃដើមវិញ។', 'info');
+  }
+}
+
+export function updateFirebaseBadge(connected, rulesWarning = false) {
+  const badge = document.getElementById('firebase-status-badge');
+  const tag = document.getElementById('firebase-connected-tag');
+
+  if (badge) {
+    if (connected) {
+      badge.innerHTML = `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-200 border border-amber-400/40 flex items-center gap-1.5 shadow-2xs backdrop-blur-xs cursor-pointer hover:bg-amber-500/30 transition" onclick="switchTab('settings')" title="Firebase Cloud Firestore ដំណើរការជោគជ័យ"><span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> <i class="fa-solid fa-fire text-[11px] text-amber-400"></i> <span class="hidden sm:inline">Firebase</span></span>`;
+    } else if (rulesWarning) {
+      badge.innerHTML = `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-rose-500/20 text-rose-200 border border-rose-400/40 flex items-center gap-1.5 shadow-2xs backdrop-blur-xs cursor-pointer hover:bg-rose-500/30 transition" onclick="switchTab('settings')" title="Firebase Rules Lock (ចុចដើម្បីមើលវិធីដោះស្រាយ)"><span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span> <i class="fa-solid fa-triangle-exclamation text-[11px] text-rose-400"></i> <span class="hidden sm:inline">Rules Lock</span></span>`;
+    } else {
+      badge.innerHTML = `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-white/15 text-white/80 border border-white/20 flex items-center gap-1.5 shadow-2xs backdrop-blur-xs cursor-pointer hover:bg-white/25 transition" onclick="switchTab('settings')" title="Firebase Standby"><span class="w-2 h-2 rounded-full bg-slate-300"></span> <i class="fa-solid fa-fire text-[11px] text-white/60"></i> <span class="hidden sm:inline">Firebase</span></span>`;
+    }
+  }
+
+  if (tag) {
+    if (connected) {
+      tag.innerHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Connected</span>`;
+    } else if (rulesWarning) {
+      tag.innerHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> Rules Lock</span>`;
+    } else {
+      tag.innerHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Standby</span>`;
+    }
+  }
+}
+
+export function copyFirestoreRules() {
+  const rules = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}`;
+  navigator.clipboard.writeText(rules).then(() => {
+    showToast('បានចម្លង Firestore Security Rules ជោគជ័យ! សូមយកទៅ Paste ក្នុង Firebase Console។', 'success');
+  }).catch(() => {
+    const el = document.getElementById('firestore-rules-code');
+    if (el) {
+      showToast('សូមជ្រើសរើស និង Copy កូដខាងលើ', 'info');
+    }
+  });
+}
+
+// ==================== SUPABASE HANDLERS ====================
 
 export async function handleSaveSupabaseConfig(e) {
   if (e) e.preventDefault();
@@ -163,13 +335,13 @@ export function updateSupabaseBadge(connected) {
   const navBadge = document.getElementById('nav-supabase-status');
   if (badge) {
     badge.innerHTML = connected
-      ? `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 flex items-center gap-1.5 shadow-2xs backdrop-blur-xs"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> <i class="fa-solid fa-cloud text-[10px]"></i> <span class="hidden sm:inline">Cloud Synced</span></span>`
-      : `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-white/15 text-white/90 border border-white/20 flex items-center gap-1.5 shadow-2xs backdrop-blur-xs"><span class="w-2 h-2 rounded-full bg-amber-300"></span> <i class="fa-solid fa-hard-drive text-[10px]"></i> <span class="hidden sm:inline">Local Mode</span></span>`;
+      ? `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 flex items-center gap-1.5 shadow-2xs backdrop-blur-xs cursor-pointer hover:bg-emerald-500/30 transition" onclick="switchTab('settings')" title="Supabase PostgreSQL Connected"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> <i class="fa-solid fa-database text-[10px]"></i> <span class="hidden sm:inline">Supabase</span></span>`
+      : `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-white/15 text-white/80 border border-white/20 flex items-center gap-1.5 shadow-2xs backdrop-blur-xs cursor-pointer hover:bg-white/25 transition" onclick="switchTab('settings')" title="Supabase Standby"><span class="w-2 h-2 rounded-full bg-slate-300"></span> <i class="fa-solid fa-database text-[10px]"></i> <span class="hidden sm:inline">Supabase</span></span>`;
   }
   if (navBadge) {
     navBadge.innerHTML = connected
-      ? `<span class="w-2 h-2 rounded-full bg-emerald-400" title="ភ្ជាប់ Cloud ជោគជ័យ"></span>`
-      : `<span class="w-2 h-2 rounded-full bg-amber-400" title="ដំណើរការ Local"></span>`;
+      ? `<span class="w-2 h-2 rounded-full bg-emerald-400" title="ភ្ជាប់ Supabase ជោគជ័យ"></span>`
+      : `<span class="w-2 h-2 rounded-full bg-slate-400" title="Supabase Standby"></span>`;
   }
 }
 
@@ -181,7 +353,7 @@ export function downloadJsonBackup() {
   const a = document.createElement('a');
   const dateStr = new Date().toISOString().split('T')[0];
   a.href = url;
-  a.download = `rental_backup_supabase_${dateStr}.json`;
+  a.download = `rental_backup_data_${dateStr}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('បានទាញយកឯកសារ Backup ជោគជ័យ', 'success');
@@ -217,12 +389,12 @@ export function exportInvoicesCsv() {
     i.roomNumber,
     `"${i.tenantName || ''}"`,
     i.month,
-    i.roomRentUsd || i.roomPriceUsd || 0,
-    i.elecUsage || i.electricUsage || 0,
-    i.elecTotalKhr || i.electricTotal || 0,
+    i.roomCostUsd || 0,
+    i.elecUsage || 0,
+    i.elecCostKhr || 0,
     i.waterUsage || 0,
-    i.waterTotalKhr || i.waterTotal || 0,
-    i.trashFeeKhr || i.trashFee || 0,
+    i.waterCostKhr || 0,
+    i.trashFeeKhr || 0,
     i.totalKhr || 0,
     (i.totalUsd || 0).toFixed(2),
     i.status
@@ -247,7 +419,7 @@ export async function handleResetData() {
     cancelText: 'បោះបង់'
   });
   if (ok) {
-    store.resetToDefault();
+    localStorage.clear();
     showToast('បាន Reset ទិន្នន័យជោគជ័យ!', 'success');
     setTimeout(() => location.reload(), 1200);
   }

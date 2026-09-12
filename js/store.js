@@ -1,8 +1,17 @@
-// ============================================
-// Central Data Store & Supabase Realtime Sync
-// Connects directly to Supabase PostgreSQL
-// ============================================
+// ========================================================
+// Central Data Store & Realtime Cloud Sync
+// Connects to Firebase Cloud Firestore & Supabase PostgreSQL
+// ========================================================
 
+import { 
+  isFirebaseConnected, 
+  initializeFirebase, 
+  writeDocToFirebase, 
+  deleteDocFromFirebase, 
+  syncCollectionToFirebase, 
+  pushAllToFirebase, 
+  pullAllFromFirebase 
+} from './firebase-config.js';
 import { isSupabaseConnected, initializeSupabase } from './supabase-config.js';
 
 export const DEFAULT_SETTINGS = {
@@ -87,13 +96,41 @@ class Store {
     try {
       this.cache[key] = data;
       localStorage.setItem(`rental_${key}`, JSON.stringify(data));
-      this.syncCollectionToSupabase(key, data);
+      this.syncCollectionToCloud(key, data);
       this.notifyListeners();
       return true;
     } catch (e) {
       console.error(`Error saving ${key}:`, e);
       return false;
     }
+  }
+
+  // Unified write document to Cloud (Firebase Firestore + Supabase fallback)
+  async writeDocToCloud(collectionName, docId, data) {
+    // 1. Write to Firebase Firestore
+    writeDocToFirebase(collectionName, docId, data).catch(err => {
+      console.warn(`[Firebase write notice] ${collectionName}/${docId}:`, err);
+    });
+    // 2. Write to Supabase PostgreSQL (if available)
+    this.writeDocToSupabase(collectionName, docId, data);
+  }
+
+  // Unified delete document from Cloud
+  async deleteDocFromCloud(collectionName, docId) {
+    // 1. Delete from Firebase Firestore
+    deleteDocFromFirebase(collectionName, docId).catch(err => {
+      console.warn(`[Firebase delete notice] ${collectionName}/${docId}:`, err);
+    });
+    // 2. Delete from Supabase
+    this.deleteDocFromSupabase(collectionName, docId);
+  }
+
+  // Unified sync collection to Cloud
+  async syncCollectionToCloud(collectionName, data) {
+    syncCollectionToFirebase(collectionName, data).catch(err => {
+      console.warn(`[Firebase sync notice] ${collectionName}:`, err);
+    });
+    this.syncCollectionToSupabase(collectionName, data);
   }
 
   // Write single document directly to Supabase
@@ -140,6 +177,73 @@ class Store {
       }
     } catch (err) {
       console.warn(`[Supabase collection sync error] ${collectionName}:`, err);
+    }
+  }
+
+  // Push all local data to Firebase Cloud Firestore
+  async pushAllToFirebase() {
+    const payload = {
+      rooms: this.getRooms(),
+      tenants: this.getTenants(),
+      meter_readings: this.getReadings(),
+      invoices: this.getInvoices(),
+      expenses: this.getExpenses(),
+      settings: this.getSettings(),
+      users: this.get('users')
+    };
+    return await pushAllToFirebase(payload);
+  }
+
+  // Pull all live collections from Firebase Cloud Firestore
+  async loadFromFirebase() {
+    try {
+      const res = await pullAllFromFirebase();
+      if (!res.success || !res.data) return false;
+      const d = res.data;
+
+      let hasData = false;
+
+      if (Array.isArray(d.rooms) && d.rooms.length > 0) {
+        this.cache.rooms = d.rooms;
+        localStorage.setItem('rental_rooms', JSON.stringify(d.rooms));
+        hasData = true;
+      }
+      if (Array.isArray(d.tenants) && d.tenants.length > 0) {
+        this.cache.tenants = d.tenants;
+        localStorage.setItem('rental_tenants', JSON.stringify(d.tenants));
+        hasData = true;
+      }
+      if (Array.isArray(d.meter_readings) && d.meter_readings.length > 0) {
+        this.cache.meter_readings = d.meter_readings;
+        localStorage.setItem('rental_meter_readings', JSON.stringify(d.meter_readings));
+        hasData = true;
+      }
+      if (Array.isArray(d.invoices) && d.invoices.length > 0) {
+        this.cache.invoices = d.invoices;
+        localStorage.setItem('rental_invoices', JSON.stringify(d.invoices));
+        hasData = true;
+      }
+      if (Array.isArray(d.expenses) && d.expenses.length > 0) {
+        this.cache.expenses = d.expenses;
+        localStorage.setItem('rental_expenses', JSON.stringify(d.expenses));
+        hasData = true;
+      }
+      if (Array.isArray(d.users) && d.users.length > 0) {
+        this.cache.users = d.users;
+        localStorage.setItem('rental_users', JSON.stringify(d.users));
+        hasData = true;
+      }
+      if (d.settings && typeof d.settings === 'object' && Object.keys(d.settings).length > 0) {
+        this.cache.settings = { ...DEFAULT_SETTINGS, ...d.settings };
+        localStorage.setItem('rental_settings', JSON.stringify(this.cache.settings));
+        hasData = true;
+      }
+
+      this.notifyListeners();
+      return hasData;
+    } catch (err) {
+      console.error('Error pulling data from Firebase:', err);
+      return false;
     }
   }
 
@@ -223,7 +327,7 @@ class Store {
   saveSettings(settings) {
     this.cache.settings = { ...DEFAULT_SETTINGS, ...settings };
     localStorage.setItem('rental_settings', JSON.stringify(this.cache.settings));
-    this.writeDocToSupabase('settings', 'global_settings', this.cache.settings);
+    this.writeDocToCloud('settings', 'global_settings', this.cache.settings);
     this.notifyListeners();
   }
 
@@ -252,7 +356,7 @@ class Store {
     };
     rooms.push(newRoom);
     this.saveRooms(rooms);
-    this.writeDocToSupabase('rooms', newRoom.id, newRoom);
+    this.writeDocToCloud('rooms', newRoom.id, newRoom);
     return newRoom;
   }
 
@@ -261,19 +365,19 @@ class Store {
     rooms = rooms.map(r => r.id === id ? { ...r, ...updatedData } : r);
     this.saveRooms(rooms);
     const updated = rooms.find(r => r.id === id);
-    if (updated) this.writeDocToSupabase('rooms', id, updated);
+    if (updated) this.writeDocToCloud('rooms', id, updated);
   }
 
   deleteRoom(id) {
     const rooms = this.getRooms().filter(r => r.id !== id);
     this.saveRooms(rooms);
-    this.deleteDocFromSupabase('rooms', id);
+    this.deleteDocFromCloud('rooms', id);
 
     // Unassign room from tenant if assigned
     const tenants = this.getTenants().map(t => {
       if (t.roomId === id) {
         const updated = { ...t, roomId: null };
-        this.writeDocToSupabase('tenants', t.id, updated);
+        this.writeDocToCloud('tenants', t.id, updated);
         return updated;
       }
       return t;
@@ -308,7 +412,7 @@ class Store {
     };
     tenants.push(newTenant);
     this.saveTenants(tenants);
-    this.writeDocToSupabase('tenants', newTenant.id, newTenant);
+    this.writeDocToCloud('tenants', newTenant.id, newTenant);
 
     if (newTenant.roomId) {
       this.updateRoom(newTenant.roomId, {
@@ -327,7 +431,7 @@ class Store {
     this.saveTenants(tenants);
 
     const updated = tenants.find(t => t.id === id);
-    if (updated) this.writeDocToSupabase('tenants', id, updated);
+    if (updated) this.writeDocToCloud('tenants', id, updated);
 
     if (oldTenant && updatedData.roomId && oldTenant.roomId !== updatedData.roomId) {
       if (oldTenant.roomId) {
@@ -348,7 +452,7 @@ class Store {
     }
     const tenants = this.getTenants().filter(t => t.id !== id);
     this.saveTenants(tenants);
-    this.deleteDocFromSupabase('tenants', id);
+    this.deleteDocFromCloud('tenants', id);
   }
 
   // Meter Readings
@@ -382,7 +486,7 @@ class Store {
       readings.push(readingDoc);
     }
     this.saveReadings(readings);
-    this.writeDocToSupabase('meter_readings', readingDoc.id, readingDoc);
+    this.writeDocToCloud('meter_readings', readingDoc.id, readingDoc);
   }
 
   // Invoices
@@ -436,7 +540,7 @@ class Store {
     };
     invoices.unshift(newInvoice);
     this.saveInvoices(invoices);
-    this.writeDocToSupabase('invoices', newInvoice.id, newInvoice);
+    this.writeDocToCloud('invoices', newInvoice.id, newInvoice);
     return newInvoice;
   }
 
@@ -445,7 +549,7 @@ class Store {
     invoices = invoices.map(inv => inv.id === id ? { ...inv, ...updatedData } : inv);
     this.saveInvoices(invoices);
     const updated = invoices.find(i => i.id === id);
-    if (updated) this.writeDocToSupabase('invoices', id, updated);
+    if (updated) this.writeDocToCloud('invoices', id, updated);
   }
 
   updateInvoicePayment(id, status, paidAmount = null) {
@@ -464,7 +568,7 @@ class Store {
   deleteInvoice(id) {
     const invoices = this.getInvoices().filter(i => i.id !== id);
     this.saveInvoices(invoices);
-    this.deleteDocFromSupabase('invoices', id);
+    this.deleteDocFromCloud('invoices', id);
   }
 
   // Expenses
@@ -485,14 +589,14 @@ class Store {
     };
     expenses.unshift(newExpense);
     this.saveExpenses(expenses);
-    this.writeDocToSupabase('expenses', newExpense.id, newExpense);
+    this.writeDocToCloud('expenses', newExpense.id, newExpense);
     return newExpense;
   }
 
   deleteExpense(id) {
     const expenses = this.getExpenses().filter(e => e.id !== id);
     this.saveExpenses(expenses);
-    this.deleteDocFromSupabase('expenses', id);
+    this.deleteDocFromCloud('expenses', id);
   }
 
   // Dashboard Aggregates

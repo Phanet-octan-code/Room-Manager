@@ -153,6 +153,8 @@ app.get('/api/status', async (req, res) => {
     hasPassword: Boolean(process.env.DB_PASSWORD),
     supabaseUrl: process.env.SUPABASE_URL || 'https://rsaxtgzmyzinvyuimthi.supabase.co',
     cloudinaryCloud: process.env.CLOUDINARY_CLOUD_NAME || 'gehtqksm',
+    firebaseProject: process.env.FIREBASE_PROJECT_ID || 'room-payment',
+    hasFirebaseKey: Boolean(process.env.FIREBASE_API_KEY),
     error: testError
   });
 });
@@ -454,6 +456,7 @@ if (!process.env.VERCEL) {
     console.log(`===================================================`);
     console.log(`  Rental Room Management System (Cloud-First)`);
     console.log(`  Local URL: http://localhost:${PORT}`);
+    console.log(`  Firebase Project: ${process.env.FIREBASE_PROJECT_ID || 'room-payment'}`);
     console.log(`  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME || 'gehtqksm'}`);
     console.log(`  Supabase Host: ${process.env.DB_HOST || 'aws-0-ap-southeast-1.pooler.supabase.com'}`);
     console.log(`===================================================`);

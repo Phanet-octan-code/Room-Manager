@@ -33,7 +33,7 @@ export function getUsers() {
 
 export function saveUsers(users) {
   localStorage.setItem('rental_users', JSON.stringify(users));
-  store.syncCollectionToSupabase('users', users);
+  store.syncCollectionToCloud('users', users);
 }
 
 export function renderUsers() {

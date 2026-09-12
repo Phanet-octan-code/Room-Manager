@@ -44,7 +44,7 @@ export function renderTenants() {
     return;
   }
 
-  // 1. Render Desktop Table Body
+  // 1. Render Desktop / Responsive Table Body
   if (tableBody) {
     tableBody.innerHTML = filteredTenants.map((tenant, index) => {
       const room = rooms.find(r => r.id === tenant.roomId);
@@ -63,22 +63,30 @@ export function renderTenants() {
 
       return `
         <tr onclick="window.viewTenantDetails('${tenant.id}')" class="border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer transition text-sm group" title="ចុចដើម្បីមើលព័ត៌មានលម្អិតអ្នកជួល">
-          <td class="py-3.5 px-3.5 text-slate-400 text-xs text-center whitespace-nowrap">${index + 1}</td>
+          <td class="py-3 px-3.5 text-slate-400 text-xs text-center whitespace-nowrap">${index + 1}</td>
 
-          <!-- Name & ID -->
-          <td class="py-3.5 px-3 whitespace-nowrap">
-            <div class="font-bold text-slate-800 text-sm group-hover:text-blue-700 transition flex items-center gap-1.5">
-              <span>${tenant.name}</span>
-              <i class="fa-solid fa-circle-info text-[11px] text-blue-500 opacity-0 group-hover:opacity-100 transition"></i>
+          <!-- Photo & Name & ID -->
+          <td class="py-3 px-4 whitespace-nowrap">
+            <div class="flex items-center gap-3">
+              ${tenant.photoUrl 
+                ? `<img src="${tenant.photoUrl}" class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 cursor-pointer hover:scale-105 transition-transform" onclick="event.stopPropagation(); window.viewTenantPhoto('${tenant.photoUrl}', '${tenant.name}')" title="ចុចដើម្បីមើលរូបថតធំ">` 
+                : `<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200/80 shadow-2xs flex-shrink-0">${tenant.name.charAt(0)}</div>`
+              }
+              <div class="min-w-0">
+                <div class="font-bold text-slate-800 text-sm group-hover:text-blue-700 transition flex items-center gap-1.5">
+                  <span class="truncate">${tenant.name}</span>
+                  <i class="fa-solid fa-circle-info text-[11px] text-blue-500 opacity-0 group-hover:opacity-100 transition"></i>
+                </div>
+                <div class="text-[11px] text-slate-400 font-mono">ID: ${tenant.id}</div>
+              </div>
             </div>
-            <div class="text-[11px] text-slate-400 font-mono">ID: ${tenant.id}</div>
           </td>
 
           <!-- Gender -->
-          <td class="py-3.5 px-3 whitespace-nowrap">${genderBadge}</td>
+          <td class="py-3 px-3 whitespace-nowrap">${genderBadge}</td>
 
           <!-- Phone (Green) -->
-          <td class="py-3.5 px-3 font-mono text-xs text-slate-700 whitespace-nowrap">
+          <td class="py-3 px-3 font-mono text-xs text-slate-700 whitespace-nowrap">
             <a href="tel:${tenant.phone}" onclick="event.stopPropagation()" class="text-emerald-700 hover:underline font-semibold inline-flex items-center gap-1.5" title="ចុចដើម្បីខល">
               <i class="fa-solid fa-phone text-xs text-emerald-600"></i>
               ${tenant.phone}
@@ -86,26 +94,26 @@ export function renderTenants() {
           </td>
 
           <!-- ID Card (Blue) -->
-          <td class="py-3.5 px-3 text-slate-700 font-mono text-xs whitespace-nowrap">
+          <td class="py-3 px-3 text-slate-700 font-mono text-xs whitespace-nowrap">
             <span>${tenant.idCard || '-'}</span>
           </td>
 
           <!-- Address -->
-          <td class="py-3.5 px-3 text-slate-600 text-xs max-w-[180px] truncate" title="${tenant.address || '-'}">
+          <td class="py-3 px-3 text-slate-600 text-xs max-w-[180px] truncate" title="${tenant.address || '-'}">
             ${tenant.address || '-'}
           </td>
 
           <!-- Room (Blue) -->
-          <td class="py-3.5 px-3 whitespace-nowrap">${roomBadge}</td>
+          <td class="py-3 px-3 whitespace-nowrap">${roomBadge}</td>
 
           <!-- Start Date -->
-          <td class="py-3.5 px-3 text-slate-600 text-xs font-mono whitespace-nowrap">${tenant.startDate || '-'}</td>
+          <td class="py-3 px-3 text-slate-600 text-xs font-mono whitespace-nowrap">${tenant.startDate || '-'}</td>
 
           <!-- Status (Green/Red) -->
-          <td class="py-3.5 px-3 whitespace-nowrap">${statusBadge}</td>
+          <td class="py-3 px-3 whitespace-nowrap">${statusBadge}</td>
 
           <!-- Action Buttons (Blue View/Edit, Red Delete) -->
-          <td class="py-3.5 px-3 text-right space-x-1.5 space-x-reverse whitespace-nowrap">
+          <td class="py-3 px-3 text-right space-x-1.5 space-x-reverse whitespace-nowrap">
             <button onclick="event.stopPropagation(); window.viewTenantDetails('${tenant.id}')" class="text-blue-600 hover:text-blue-800 p-1.5 font-medium rounded-lg hover:bg-blue-50 transition" title="មើលព័ត៌មានលម្អិតអ្នកជួល">
               <i class="fa-solid fa-eye"></i>
             </button>
@@ -130,14 +138,15 @@ export function renderTenants() {
       return `
         <div onclick="window.viewTenantDetails('${tenant.id}')" class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs space-y-3 cursor-pointer hover:border-blue-300 transition">
           
-          <!-- Card Header: Name + Status -->
+          <!-- Card Header: Photo + Name + Status -->
           <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5 min-w-0">
-              <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-200 flex-shrink-0">
-                <i class="fa-solid fa-user"></i>
-              </div>
+            <div class="flex items-center gap-3 min-w-0">
+              ${tenant.photoUrl 
+                ? `<img src="${tenant.photoUrl}" class="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 cursor-pointer" onclick="event.stopPropagation(); window.viewTenantPhoto('${tenant.photoUrl}', '${tenant.name}')" title="មើលរូបថត">` 
+                : `<div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-700 flex items-center justify-center font-bold text-sm border border-blue-200/80 shadow-2xs flex-shrink-0">${tenant.name.charAt(0)}</div>`
+              }
               <div class="min-w-0">
-                <div class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                <div class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
                   <span class="truncate">${tenant.name}</span>
                   <i class="fa-solid fa-chevron-right text-[10px] text-blue-500"></i>
                 </div>
@@ -145,9 +154,9 @@ export function renderTenants() {
               </div>
             </div>
             
-            <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold border flex items-center gap-1.5 flex-shrink-0 ${isOccupied ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}">
+            <span class="text-xs px-2.5 py-1 rounded-full font-semibold border flex items-center gap-1.5 flex-shrink-0 ${isOccupied ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}">
               <span class="w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}"></span>
-              <span class="text-[11px]">${isOccupied ? 'ស្នាក់នៅ' : 'ចាកចេញ'}</span>
+              <span class="text-[11px] font-medium">${isOccupied ? 'ស្នាក់នៅ' : 'ចាកចេញ'}</span>
             </span>
           </div>
 
@@ -214,6 +223,45 @@ export function renderTenants() {
     }).join('');
   }
 }
+
+// Toggle View Mode on Mobile (Cards vs Table)
+export function toggleTenantViewMode(mode) {
+  const mobileCards = document.getElementById('tenants-mobile-cards');
+  const tableContainer = document.getElementById('tenants-table-container');
+  const btnCards = document.getElementById('btn-tenant-view-cards');
+  const btnTable = document.getElementById('btn-tenant-view-table');
+
+  if (mode === 'table') {
+    if (mobileCards) mobileCards.classList.add('hidden');
+    if (tableContainer) {
+      tableContainer.classList.remove('hidden');
+      tableContainer.classList.remove('md:block');
+    }
+    if (btnTable) {
+      btnTable.classList.add('bg-blue-600', 'text-white');
+      btnTable.classList.remove('bg-slate-100', 'text-slate-600');
+    }
+    if (btnCards) {
+      btnCards.classList.remove('bg-blue-600', 'text-white');
+      btnCards.classList.add('bg-slate-100', 'text-slate-600');
+    }
+  } else {
+    if (mobileCards) mobileCards.classList.remove('hidden');
+    if (tableContainer) {
+      tableContainer.classList.add('hidden');
+      tableContainer.classList.add('md:block');
+    }
+    if (btnCards) {
+      btnCards.classList.add('bg-blue-600', 'text-white');
+      btnCards.classList.remove('bg-slate-100', 'text-slate-600');
+    }
+    if (btnTable) {
+      btnTable.classList.remove('bg-blue-600', 'text-white');
+      btnTable.classList.add('bg-slate-100', 'text-slate-600');
+    }
+  }
+}
+window.toggleTenantViewMode = toggleTenantViewMode;
 
 export function populateTenantRoomSelect(selectedRoomId = '') {
   const select = document.getElementById('tenant-room-id');

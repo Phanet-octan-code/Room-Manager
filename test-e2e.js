@@ -109,8 +109,22 @@ async function runE2ETests() {
 
     const storeJsRes = await fetch(baseUrl + '/js/store.js');
     assert(storeJsRes.ok, 'Delivered js/store.js with 200 OK');
+
+    const firebaseConfigRes = await fetch(baseUrl + '/js/firebase-config.js');
+    assert(firebaseConfigRes.ok, 'Delivered js/firebase-config.js with 200 OK');
   } catch (err) {
     assert(false, 'Static asset test exception: ' + err.message);
+  }
+
+  // Test 5: Firebase Integration Verification
+  console.log('\n[5] Testing Firebase Configuration & Endpoints...');
+  try {
+    const statusRes = await fetch(baseUrl + '/api/status');
+    const statusData = await statusRes.json();
+    assert(statusData.firebaseProject === 'room-payment', 'Firebase Project ID configured: room-payment');
+    assert(statusData.hasFirebaseKey === true, 'Firebase API Key present in server environment: true');
+  } catch (err) {
+    assert(false, 'Firebase test exception: ' + err.message);
   }
 
   console.log('\n========================================================');

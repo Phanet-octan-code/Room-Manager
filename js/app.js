@@ -63,6 +63,13 @@ import {
 import {
   loadSettingsForm,
   handleSaveGeneralSettings,
+  handleSaveFirebaseConfig,
+  handleTestFirebaseConnection,
+  handleSyncFirebase,
+  handlePullFirebase,
+  handleClearFirebase,
+  copyFirestoreRules,
+  updateFirebaseBadge,
   handleSaveSupabaseConfig,
   handleClearSupabase,
   downloadJsonBackup,
@@ -73,6 +80,7 @@ import {
   handleSyncSupabase,
   handlePullSupabase
 } from './settings.js';
+import { initializeFirebase, testFirebaseConnection } from './firebase-config.js';
 
 // Expose handlers to window for inline HTML onclick/onchange
 window.openRoomModal = openRoomModal;
@@ -188,6 +196,12 @@ window.deleteUser = async (id) => {
 window.downloadJsonBackup = downloadJsonBackup;
 window.exportInvoicesCsv = exportInvoicesCsv;
 window.handleResetData = handleResetData;
+window.handleSaveFirebaseConfig = handleSaveFirebaseConfig;
+window.handleTestFirebaseConnection = handleTestFirebaseConnection;
+window.handleSyncFirebase = handleSyncFirebase;
+window.handlePullFirebase = handlePullFirebase;
+window.handleClearFirebase = handleClearFirebase;
+window.copyFirestoreRules = copyFirestoreRules;
 window.handleSaveSupabaseConfig = handleSaveSupabaseConfig;
 window.handleClearSupabase = handleClearSupabase;
 window.handleSyncSupabase = handleSyncSupabase;
@@ -347,6 +361,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('change-password-form')?.addEventListener('submit', handleChangePasswordSubmit);
   document.getElementById('create-invoice-form')?.addEventListener('submit', handleSaveInvoice);
   document.getElementById('general-settings-form')?.addEventListener('submit', handleSaveGeneralSettings);
+  document.getElementById('firebase-settings-form')?.addEventListener('submit', handleSaveFirebaseConfig);
   document.getElementById('supabase-settings-form')?.addEventListener('submit', handleSaveSupabaseConfig);
   document.getElementById('import-file-input')?.addEventListener('change', handleImportBackup);
 
@@ -393,13 +408,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchTab('dashboard');
   }
 
-  // Check Supabase connection and pull live cloud data on startup
+  // 1. Check Firebase Cloud Firestore connection and pull live cloud data on startup
+  try {
+    const fbResult = await initializeFirebase();
+    updateFirebaseBadge(fbResult && fbResult.connected, fbResult && fbResult.rulesWarning);
+    if (fbResult && fbResult.connected) {
+      const fbSynced = await store.loadFromFirebase();
+      if (fbSynced) {
+        console.log('✓ Auto-synced live data from Firebase Cloud Firestore.');
+        if (isAuthenticated) {
+          updateDashboardStats();
+          renderRooms();
+          renderTenants();
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Firebase startup check notice:', err);
+    updateFirebaseBadge(false);
+  }
+
+  // 2. Check Supabase connection
   try {
     const supaResult = await initializeSupabase();
     updateSupabaseBadge(supaResult && supaResult.connected);
     if (supaResult && supaResult.connected) {
       await store.loadFromSupabase();
-      console.log('✓ Auto-synced all live data from Supabase Cloud.');
+      console.log('✓ Auto-synced live data from Supabase Cloud.');
       if (isAuthenticated) {
         updateDashboardStats();
         renderRooms();
